@@ -1,0 +1,6 @@
+{
+  "name": "Свадебный конструктор и приглашение — Денис и Дарья",
+  "description": "Элегантное приглашение на усадебный ужин Дениса и Дарьи Херувимовых с интерактивным визуальным редактором (CMS) и экспортом PHP + MySQL бэкенда.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-display: "Playfair Display", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-warm-cream: #fbf9f4;
+  --color-imperial-gold: #b5955a;
+  --color-estate-green: #2d342d;
+  --color-hover-accent: #2d342d;
+  --color-deep-burgundy: #4a1d1d;
+  --color-soft-rose: #d4a373;
+}
+
+body {
+  @apply bg-warm-cream text-stone-900 font-sans;
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
+  
+  /* Decorative frame for imperial look */
+  .imperial-frame {
+    position: relative;
+  }
+  .imperial-frame::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border: 1px solid var(--color-imperial-gold);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+}
