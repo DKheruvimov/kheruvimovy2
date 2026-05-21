@@ -1,18 +1,45 @@
-name: Docker Image CI
+# --- Stage 1: Build the client and server ---
+FROM node:20-alpine AS builder
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+WORKDIR /app
 
-jobs:
+# Install dependencies
+COPY package*.json ./
+RUN npm install
 
-  build:
+# Copy the application source files
+COPY . .
 
-    runs-on: ubuntu-latest
+# Compile both Vite frontend assets and Node/esbuild backend server
+RUN npm run build
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+# --- Stage 2: Create lightweight production image ---
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Copy package configurations and install only production-only dependencies
+COPY package*.json ./
+RUN npm install --omit=dev && npm cache clean --force
+
+# Copy only the compiled production ready production assets (the client bundle & compiled Express server)
+COPY --from=builder /app/dist ./dist
+
+# Create local data storage directory where administrative config, RSVP responses,
+# and content updates are saved locally. Assign directory ownership to the standard non-root 'node' user.
+RUN mkdir -p /app/data && chown -R node:node /app
+
+# Switch to standard non-root node user for better security
+USER node
+
+# Expose the API and application port
+EXPOSE 3000
+
+# Define a persistent volume for the local JSON storage folder
+VOLUME [ "/app/data" ]
+
+# Spin up the compiled Node.js Express server
+CMD ["node", "dist/server.cjs"]
