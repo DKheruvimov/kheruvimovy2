@@ -331,7 +331,7 @@ export default function App() {
   const handleYandexLogin = async () => {
     setIsLoggingIn(true);
     try {
-      const res = await fetch('/api/auth/yandex/url');
+      const res = await fetch(`/api/auth/yandex/url?origin=${encodeURIComponent(window.location.origin)}`);
       const { url } = await res.json();
       window.open(url, 'yandex_oath', 'width=600,height=700');
     } catch (err) {

@@ -5,6 +5,7 @@ import { createServer as createViteServer } from "vite";
 
 async function startServer() {
   const app = express();
+  app.set("trust proxy", true);
   const PORT = 3000;
 
   app.use(express.json());
@@ -39,6 +40,37 @@ async function startServer() {
       console.error("Failed to read yandexConfig from admin file", err);
     }
     return { clientId, clientSecret };
+  };
+
+  // Helper to construct app URL robustly
+  const getAppUrl = (req: any) => {
+    let appUrl = (req.query.origin as string) || process.env.APP_URL;
+
+    if (!appUrl) {
+      // 1. Check standard proxy/forwarding headers
+      const forwardedProto = req.get('x-forwarded-proto');
+      const forwardedHost = req.get('x-forwarded-host');
+      if (forwardedProto && forwardedHost) {
+        appUrl = `${forwardedProto}://${forwardedHost}`;
+      } else {
+        // 2. Fallback to host header
+        const host = req.get('host') || 'localhost:3000';
+        const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+        appUrl = `${protocol}://${host}`;
+      }
+    }
+
+    if (!appUrl.startsWith('http')) {
+      appUrl = `https://${appUrl}`;
+    }
+
+    let cleanAppUrl = appUrl.replace(/\/+$/, "");
+    if (cleanAppUrl.includes('.containerapps.ru') || cleanAppUrl.includes('.cloud.ru')) {
+      // Strip port 3000 if it leaked through from backend to a public cloud.ru URL
+      cleanAppUrl = cleanAppUrl.replace(/:3000\b/, "");
+    }
+
+    return cleanAppUrl;
   };
 
   // Ensure data directory exists
@@ -300,20 +332,7 @@ async function startServer() {
   // Yandex OAuth URL
   app.get("/api/auth/yandex/url", (req, res) => {
     const { clientId } = getYandexConfig();
-    let appUrl = process.env.APP_URL;
-
-    // Determine current App URL from requester if not set
-    if (!appUrl) {
-      const host = req.get('host');
-      const protocol = host?.includes('localhost') ? 'http' : 'https';
-      appUrl = `${protocol}://${host}`;
-    }
-    
-    if (!appUrl.startsWith('http')) {
-      appUrl = `https://${appUrl}`;
-    }
-
-    const cleanAppUrl = appUrl.replace(/\/+$/, "");
+    const cleanAppUrl = getAppUrl(req);
     const redirectUri = `${cleanAppUrl}/auth/callback/yandex`;
     
     console.log("Generating Yandex Auth URL with redirect_uri:", redirectUri);
@@ -335,16 +354,7 @@ async function startServer() {
     }
 
     try {
-      let appUrl = process.env.APP_URL;
-      if (!appUrl) {
-        const host = req.get('host');
-        const protocol = host?.includes('localhost') ? 'http' : 'https';
-        appUrl = `${protocol}://${host}`;
-      }
-      if (!appUrl.startsWith('http')) {
-        appUrl = `https://${appUrl}`;
-      }
-      const cleanAppUrl = appUrl.replace(/\/+$/, "");
+      const cleanAppUrl = getAppUrl(req);
       const redirectUri = `${cleanAppUrl}/auth/callback/yandex`;
 
       const { clientId, clientSecret } = getYandexConfig();
