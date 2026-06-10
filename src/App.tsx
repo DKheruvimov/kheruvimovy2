@@ -172,11 +172,30 @@ export default function App() {
       setIsAdminLoggedIn(true);
     }
 
-    // Load Yandex user from localStorage
-    const savedUser = localStorage.getItem('yandexUser');
-    if (savedUser) {
+    // Load from URL parameters fallback (important for mobile/redirect-based OAuth)
+    const urlParams = new URLSearchParams(window.location.search);
+    const yandexUserParam = urlParams.get('yandex_user');
+    let loadedUserParam = null;
+
+    if (yandexUserParam) {
       try {
-        const user = JSON.parse(savedUser);
+        const decodedUser = JSON.parse(decodeURIComponent(yandexUserParam));
+        localStorage.setItem('yandexUser', JSON.stringify(decodedUser));
+        loadedUserParam = decodedUser;
+        
+        // Clean URL from parameters so it looks neat
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      } catch (e) {
+        console.error("Failed to parse yandex_user from URL", e);
+      }
+    }
+
+    // Load Yandex user from localStorage or parsed param
+    const savedUser = localStorage.getItem('yandexUser');
+    const user = loadedUserParam || (savedUser ? JSON.parse(savedUser) : null);
+    if (user) {
+      try {
         setYandexUser(user);
         
         // Also verify Yandex admin status against backend
@@ -200,7 +219,7 @@ export default function App() {
           name: nameFromUser || prev.name
         }));
       } catch (e) {
-        console.error("Failed to parse saved user", e);
+        console.error("Failed to parse user", e);
       }
     }
 
@@ -333,7 +352,17 @@ export default function App() {
     try {
       const res = await fetch(`/api/auth/yandex/url?origin=${encodeURIComponent(window.location.origin)}`);
       const { url } = await res.json();
-      window.open(url, 'yandex_oath', 'width=600,height=700');
+      
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+      
+      if (isMobile) {
+        window.location.href = url;
+      } else {
+        const authWindow = window.open(url, 'yandex_oauth', 'width=600,height=700');
+        if (!authWindow) {
+          window.location.href = url;
+        }
+      }
     } catch (err) {
       console.error("Failed to initiate Yandex login", err);
       setIsLoggingIn(false);

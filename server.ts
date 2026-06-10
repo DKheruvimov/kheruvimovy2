@@ -26,8 +26,8 @@ async function startServer() {
 
   // Helper to get Yandex config (stored settings or .env fallback)
   const getYandexConfig = () => {
-    let clientId = process.env.YANDEX_CLIENT_ID || "";
-    let clientSecret = process.env.YANDEX_CLIENT_SECRET || "";
+    let clientId = process.env.YANDEX_CLIENT_ID || "f0e504521c4d499bb9289b83c7079ba1";
+    let clientSecret = process.env.YANDEX_CLIENT_SECRET || "e8b24a174195469ab278d96e4acca372";
     try {
       if (fs.existsSync(ADMIN_FILE)) {
         const adminData = JSON.parse(fs.readFileSync(ADMIN_FILE, "utf-8"));
@@ -81,6 +81,18 @@ async function startServer() {
       console.error("Failed to create data directory", err);
     }
   }
+
+  const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    try {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    } catch (err) {
+      console.error("Failed to create uploads directory", err);
+    }
+  }
+
+  // Serve uploads statically
+  app.use("/uploads", express.static(UPLOADS_DIR));
 
   // Ensure admin configuration exists
   if (!fs.existsSync(ADMIN_FILE)) {
@@ -164,6 +176,27 @@ async function startServer() {
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: "Failed to save rsvp" });
+    }
+  });
+
+  // DELETE single RSVP by ID (requires admin)
+  app.delete("/api/rsvp/:id", (req, res) => {
+    if (!verifyAdminToken(req)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const { id } = req.params;
+    try {
+      if (fs.existsSync(RSVP_FILE)) {
+        let rsvps = JSON.parse(fs.readFileSync(RSVP_FILE, "utf-8"));
+        const initialLen = rsvps.length;
+        rsvps = rsvps.filter((r: any) => String(r.id) !== String(id));
+        fs.writeFileSync(RSVP_FILE, JSON.stringify(rsvps, null, 2));
+        res.json({ success: true, count: rsvps.length, deleted: initialLen !== rsvps.length });
+      } else {
+        res.json({ success: true, count: 0, deleted: false });
+      }
+    } catch (err) {
+      res.status(500).json({ error: "Failed to delete rsvp" });
     }
   });
 
@@ -298,6 +331,31 @@ async function startServer() {
     }
   });
 
+  // POST local binary image upload (requires admin token)
+  app.post("/api/upload", express.raw({ type: "image/*", limit: "15mb" }), (req, res) => {
+    if (!verifyAdminToken(req)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const contentType = req.headers["content-type"] || "image/jpeg";
+    let ext = "jpg";
+    if (contentType.includes("png")) ext = "png";
+    else if (contentType.includes("gif")) ext = "gif";
+    else if (contentType.includes("webp")) ext = "webp";
+    else if (contentType.includes("svg")) ext = "svg";
+
+    const fileName = `upload_${Date.now()}.${ext}`;
+    const filePath = path.join(DATA_DIR, "uploads", fileName);
+
+    try {
+      fs.writeFileSync(filePath, req.body);
+      res.json({ success: true, url: `/uploads/${fileName}` });
+    } catch (err) {
+      console.error("Upload failed", err);
+      res.status(500).json({ error: "Failed to save file" });
+    }
+  });
+
   // GET admin Yandex config
   app.get("/api/admin/yandex-config", (req, res) => {
     if (!verifyAdminToken(req)) {
@@ -386,22 +444,33 @@ async function startServer() {
       const userData = await userResponse.json();
       console.log("Fetched Yandex user info for login:", userData.login, "email:", userData.default_email);
 
-      // Return content that closes the popup and sends data to parent
+      // Return content that closes the popup and sends data to parent (or redirects back with state on mobile)
       res.send(`
         <html>
           <body>
             <script>
+              var userData = ${JSON.stringify(userData)};
+              var successUrl = '/?logged_in=true&yandex_user=' + encodeURIComponent(JSON.stringify(userData));
+              
               if (window.opener) {
-                window.opener.postMessage({ 
-                  type: 'OAUTH_AUTH_SUCCESS', 
-                  user: ${JSON.stringify(userData)} 
-                }, '*');
-                window.close();
+                try {
+                  window.opener.postMessage({ 
+                    type: 'OAUTH_AUTH_SUCCESS', 
+                    user: userData 
+                  }, '*');
+                  // Give it a tiny moment to post message, then try to close
+                  setTimeout(function() {
+                    window.close();
+                  }, 150);
+                } catch (e) {
+                  // Fallback if opener postMessage fails due to cross-origin or other restrictions
+                  window.location.href = successUrl;
+                }
               } else {
-                window.location.href = '/?logged_in=true';
+                window.location.href = successUrl;
               }
             </script>
-            <p>Authentication successful. Closing window...</p>
+            <p>Авторизация успешна. Возврат к сайту...</p>
           </body>
         </html>
       `);

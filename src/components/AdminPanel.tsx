@@ -304,6 +304,68 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
+  // State for image uploads loading indicator
+  const [uploadingState, setUploadingState] = useState<Record<string, boolean>>({});
+
+  const handleImageUploadForField = async (e: React.ChangeEvent<HTMLInputElement>, field: 'heroImage' | 'storyImage' | 'detailsImage') => {
+    const file = e.target.files?.[0];
+    if (!file || !adminToken) return;
+
+    // Set uploading state to true for this field
+    setUploadingState(prev => ({ ...prev, [field]: true }));
+
+    try {
+      // Read file as raw ArrayBuffer
+      const buffer = await file.arrayBuffer();
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type,
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: buffer
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.url) {
+          handleChange(field, data.url);
+        } else {
+          alert('Ошибка при сохранении файла на сервере.');
+        }
+      } else {
+        alert('Не удалось загрузить изображение. Проверьте размер файла.');
+      }
+    } catch (err) {
+      console.error('Error uploading image', err);
+      alert('Ошибка при соединении с сервером');
+    } finally {
+      setUploadingState(prev => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleDeleteRsvp = async (id: string, name: string) => {
+    if (!adminToken) return;
+    if (!window.confirm(`Вы уверены, что хотите удалить подтверждение от ${name}?`)) return;
+    try {
+      const res = await fetch(`/api/rsvp/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      if (res.ok) {
+        fetchRsvps();
+      } else {
+        alert("Не удалось удалить гостя");
+      }
+    } catch (err) {
+      console.error("Failed to delete rsvp", err);
+      alert("Ошибка при выполнении удаления гостя");
+    }
+  };
+
   const fetchRsvps = async () => {
     setIsLoadingRsvps(true);
     try {
@@ -473,7 +535,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
             </section>
 
-            {/* Media */}
+             {/* Media */}
             <section className="space-y-6">
               <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Изображения</h3>
               <div className="space-y-6">
@@ -483,7 +545,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <img src={content.heroImage} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-grow">
-                      <label className="text-[9px] text-stone-400 uppercase font-bold">Главное фото (URL)</label>
+                      {uploadingState['heroImage'] ? (
+                        <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
+                      ) : (
+                        <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
+                          <span>Главное фото (URL)</span>
+                          <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
+                            <Plus size={10} />
+                            Загрузить локально
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={e => handleImageUploadForField(e, 'heroImage')}
+                            />
+                          </span>
+                        </label>
+                      )}
                       <input 
                         type="text" 
                         className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
@@ -505,7 +583,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <img src={content.storyImage} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-grow">
-                      <label className="text-[9px] text-stone-400 uppercase font-bold">Фото истории (URL)</label>
+                      {uploadingState['storyImage'] ? (
+                        <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка...</div>
+                      ) : (
+                        <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
+                          <span>Фото истории (URL)</span>
+                          <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
+                            <Plus size={10} />
+                            Загрузить локально
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={e => handleImageUploadForField(e, 'storyImage')}
+                            />
+                          </span>
+                        </label>
+                      )}
                       <input 
                         type="text" 
                         className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
@@ -527,7 +621,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <img src={content.detailsImage} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-grow">
-                      <label className="text-[9px] text-stone-400 uppercase font-bold">Фото деталей (URL)</label>
+                      {uploadingState['detailsImage'] ? (
+                        <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка...</div>
+                      ) : (
+                        <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
+                          <span>Фото деталей (URL)</span>
+                          <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
+                            <Plus size={10} />
+                            Загрузить локально
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={e => handleImageUploadForField(e, 'detailsImage')}
+                            />
+                          </span>
+                        </label>
+                      )}
                       <input 
                         type="text" 
                         className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
@@ -798,14 +908,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <div key={rsvp.id} className="p-4 bg-stone-50 rounded-lg border border-stone-100 group hover:border-imperial-gold/30 transition-all text-stone-700">
                     <div className="flex items-start gap-4">
                       {rsvp.avatarUrl && (
-                        <img src={rsvp.avatarUrl} className="w-12 h-12 rounded-full border border-stone-200 referrer-policy='no-referrer'" alt="Avatar" />
+                        <img src={rsvp.avatarUrl} className="w-12 h-12 rounded-full border border-stone-200" referrerPolicy="no-referrer" alt="Avatar" />
                       )}
                       <div className="flex-grow">
                         <div className="flex items-center justify-between">
                           <h4 className="font-display italic text-lg leading-tight">{rsvp.name}</h4>
-                          <span className={`text-[9px] uppercase tracking-tighter px-2 py-0.5 rounded ${rsvp.attending === 'yes' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {rsvp.attending === 'yes' ? 'Будетъ' : 'Отклонилъ'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[9px] uppercase tracking-tighter px-2 py-0.5 rounded ${rsvp.attending === 'yes' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {rsvp.attending === 'yes' ? 'Будетъ' : 'Отклонилъ'}
+                            </span>
+                            <button 
+                              onClick={() => handleDeleteRsvp(rsvp.id, rsvp.name)}
+                              className="p-1 px-1.5 text-stone-300 hover:text-red-600 hover:bg-stone-100 rounded transition-colors cursor-pointer"
+                              title="Удалить гостя"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         </div>
                         <p className="text-[10px] text-stone-400 mt-1">{rsvp.yandexEmail}</p>
                         {rsvp.message && (

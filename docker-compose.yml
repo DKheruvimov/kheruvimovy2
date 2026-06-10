@@ -1,9 +1,0 @@
-version: '3.8'
-services:
-  wedding:
-    image: kheruvimovy.cr.cloud.ru/wedding-app:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - /var/www/wedding/data:/app/data
-    restart: always
