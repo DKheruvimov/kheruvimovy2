@@ -1,18 +1,9 @@
 version: '3.8'
-
 services:
-  web-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: kheruvimovy2-container
-    restart: unless-stopped
+  wedding:
+    image: kheruvimovy.cr.cloud.ru/wedding-app:latest
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DOMAIN=kheruvimovy.ru
-    # Добавьте переменные окружения (.env), если они нужны вашему бэкенду
-    # env_file:
-    #   - .env
+    volumes:
+      - /var/www/wedding/data:/app/data
+    restart: always
