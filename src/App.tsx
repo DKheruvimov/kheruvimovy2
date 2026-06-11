@@ -466,6 +466,25 @@ export default function App() {
     root.style.setProperty('--color-quote-bg', colors.quoteBg || defaultContent.colors.quoteBg);
   }, [displayContent?.colors]);
 
+  useEffect(() => {
+    const faviconUrl = displayContent?.faviconUrl || "/favicon.svg";
+    const link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+    if (link) {
+      link.href = faviconUrl;
+      if (faviconUrl.endsWith(".svg")) {
+        link.type = "image/svg+xml";
+      } else {
+        link.type = "image/png";
+      }
+    } else {
+      const newLink = document.createElement("link");
+      newLink.rel = "icon";
+      newLink.href = faviconUrl;
+      newLink.type = faviconUrl.endsWith(".svg") ? "image/svg+xml" : "image/png";
+      document.head.appendChild(newLink);
+    }
+  }, [displayContent?.faviconUrl]);
+
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 1.05]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
 

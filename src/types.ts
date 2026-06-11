@@ -60,6 +60,7 @@ export interface SiteContent {
   manorTitle: string;
   countdownEnabled?: boolean;
   countdownDate?: string;
+  faviconUrl?: string;
   sections?: SectionConfig[];
   colors: {
     primary: string;
@@ -115,6 +116,7 @@ export const defaultContent: SiteContent = {
   manorTitle: "Усадьба времёнъ Имперiи",
   countdownEnabled: true,
   countdownDate: "2026-08-25T17:00",
+  faviconUrl: "/favicon.svg",
   sections: [
     { id: 'story', title: 'Наша исторiя', visible: true },
     { id: 'schedule', title: 'Распорядокъ дня', visible: true },

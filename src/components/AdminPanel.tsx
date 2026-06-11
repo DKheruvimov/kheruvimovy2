@@ -4,7 +4,7 @@ import { SiteContent, ScheduleItem, DetailItem, defaultImageStyle } from '../typ
 import { 
   Save, Plus, Trash2, X, Image as ImageIcon, Users, Layout, Palette, 
   Shield, Link2, Unlink, LogOut, Key, Check, Settings, Maximize2, Minimize2,
-  AlignLeft, AlignRight, Smartphone
+  AlignLeft, AlignRight, Smartphone, Upload
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -363,7 +363,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleImageUploadForField = async (
     e: React.ChangeEvent<HTMLInputElement>, 
-    field: 'heroImage' | 'storyImage' | 'detailsImage' | 'heroImageMobile' | 'storyImageMobile' | 'detailsImageMobile'
+    field: 'heroImage' | 'storyImage' | 'detailsImage' | 'heroImageMobile' | 'storyImageMobile' | 'detailsImageMobile' | 'faviconUrl'
   ) => {
     const file = e.target.files?.[0];
     if (!file || !adminToken) return;
@@ -376,7 +376,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       let uploadBlob: Blob = file;
       let uploadType: string = file.type;
 
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
         try {
           const compressed = await compressImage(file);
           uploadBlob = compressed.blob;
@@ -430,7 +430,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       let uploadBlob: Blob = file;
       let uploadType: string = file.type;
 
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
         try {
           const compressed = await compressImage(file);
           uploadBlob = compressed.blob;
@@ -694,6 +694,57 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       />
                     </div>
                   )}
+                </div>
+
+                {/* Favicon Configuration */}
+                <div className="pt-4 border-t border-stone-100 space-y-3">
+                  <div className="space-y-0.5">
+                    <label className="text-[10px] text-stone-500 uppercase font-bold">Иконка сайта (Favicon)</label>
+                    <p className="text-[9px] text-stone-400 tracking-wide font-light">Добавьте иконку для отображения во вкладке браузера (рекомендуется .svg или .png)</p>
+                  </div>
+                  
+                  <div className="flex gap-3 items-center">
+                    <div className="w-12 h-12 bg-stone-50 border border-stone-200 rounded-lg flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0 shadow-sm text-stone-300">
+                      {content.faviconUrl ? (
+                        <img 
+                          src={content.faviconUrl} 
+                          className="w-full h-full object-contain" 
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span className="text-[10px] text-stone-300 font-bold uppercase">Fav</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex-grow space-y-1.5">
+                      {uploadingState['faviconUrl'] ? (
+                        <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка иконки...</div>
+                      ) : (
+                        <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
+                          <span>Иконка URL</span>
+                          <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
+                            <Upload size={10} />
+                            Загрузить файл
+                            <input 
+                              type="file" 
+                              accept=".svg,.png,.ico,.jpg,.jpeg,.webp" 
+                              className="hidden" 
+                              onChange={e => handleImageUploadForField(e, 'faviconUrl')} 
+                            />
+                          </span>
+                        </label>
+                      )}
+                      <input 
+                        type="text" 
+                        className="w-full border-b border-stone-200 py-0.5 focus:border-imperial-gold outline-none text-xs bg-transparent text-stone-800"
+                        value={content.faviconUrl || ""}
+                        placeholder="/favicon.svg"
+                        onChange={e => handleChange('faviconUrl', e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
