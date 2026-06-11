@@ -416,6 +416,59 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
+  const handleImageUploadForCustomSection = async (
+    file: File,
+    sectionId: string,
+    imgKey: 'image' | 'imageMobile',
+    onComplete: (url: string) => void
+  ) => {
+    if (!file || !adminToken) return;
+    const uploadFieldId = `${sectionId}_${imgKey}`;
+    setUploadingState(prev => ({ ...prev, [uploadFieldId]: true }));
+
+    try {
+      let uploadBlob: Blob = file;
+      let uploadType: string = file.type;
+
+      if (file.type.startsWith('image/')) {
+        try {
+          const compressed = await compressImage(file);
+          uploadBlob = compressed.blob;
+          uploadType = compressed.type;
+        } catch (compressErr) {
+          console.error("Failed to compress image, using original", compressErr);
+        }
+      }
+
+      const buffer = await uploadBlob.arrayBuffer();
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': uploadType,
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: buffer
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.url) {
+          onComplete(data.url);
+        } else {
+          alert('Ошибка при сохранении файла на сервере.');
+        }
+      } else {
+        alert('Не удалось загрузить изображение. Проверьте размер файла.');
+      }
+    } catch (err) {
+      console.error('Error uploading custom section image', err);
+      alert('Ошибка при соединении с сервером');
+    } finally {
+      setUploadingState(prev => ({ ...prev, [uploadFieldId]: false }));
+    }
+  };
+
   const handleDeleteRsvp = async (id: string, name: string) => {
     if (!adminToken) return;
     if (!window.confirm(`Вы уверены, что хотите удалить подтверждение от ${name}?`)) return;
@@ -609,6 +662,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     value={content.location}
                     onChange={e => handleChange('location', e.target.value)}
                   />
+                </div>
+                
+                {/* Countdown Configuration */}
+                <div className="pt-2 border-t border-stone-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <label className="text-[10px] text-stone-500 uppercase font-bold">Таймер обратного отсчета</label>
+                      <p className="text-[9px] text-stone-400 tracking-wide font-light">Добавьте красивое тиканье секунд на сайт</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleChange('countdownEnabled', !content.countdownEnabled)}
+                      className={`px-3 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg border transition-all cursor-pointer shadow-sm ${
+                        content.countdownEnabled
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' 
+                        : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
+                      }`}
+                    >
+                      {content.countdownEnabled ? "Включенъ" : "Выключенъ"}
+                    </button>
+                  </div>
+                  {content.countdownEnabled && (
+                    <div className="pt-1 space-y-1 entry-animation">
+                      <label className="text-[9px] text-stone-400 uppercase font-bold tracking-widest">Целевая дата и время</label>
+                      <input 
+                        type="datetime-local" 
+                        className="w-full border border-stone-200 rounded px-2.5 py-1.5 focus:border-imperial-gold outline-none text-xs bg-white/50 text-stone-800"
+                        value={content.countdownDate || "2026-08-25T17:00"}
+                        onChange={e => handleChange('countdownDate', e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -916,6 +1001,255 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
                 ))}
               </div>
+            </section>
+
+            {/* Section Management */}
+            <section className="space-y-6 pt-6 border-t border-stone-200">
+              <div className="space-y-1">
+                <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Управленіе секціями сайта</h3>
+                <p className="text-[10px] text-stone-400">Здесь Вы можете изменять порядокъ отображенiя, скрывать или добавлять новые собственные разделы.</p>
+              </div>
+              
+              <div className="space-y-4">
+                {(content.sections || [
+                  { id: 'story', title: 'Наша исторiя', visible: true },
+                  { id: 'schedule', title: 'Распорядокъ дня', visible: true },
+                  { id: 'details', title: 'Усадебный уставъ', visible: true },
+                  { id: 'rsvp', title: 'Почта', visible: true }
+                ]).map((sec, idx, arr) => {
+                  return (
+                    <div key={sec.id} className="p-4 bg-stone-50 rounded-xl border border-stone-200/60 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-stone-400 font-mono">#{idx + 1}</span>
+                          <span className="text-sm font-semibold text-stone-800 font-display italic">{sec.title || "Без заглавiя"}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {/* Visibility Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newSections = [...arr];
+                              newSections[idx] = { ...sec, visible: sec.visible !== false ? false : true };
+                              handleChange('sections', newSections);
+                            }}
+                            className={`px-2 py-1 text-[9px] font-bold uppercase rounded transition-colors cursor-pointer ${
+                              sec.visible !== false 
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
+                              : 'bg-stone-200 text-stone-500 border border-stone-300'
+                            }`}
+                          >
+                            {sec.visible !== false ? "Виденъ" : "Скрытъ"}
+                          </button>
+
+                          {/* Reordering Up */}
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => {
+                              if (idx === 0) return;
+                              const newSections = [...arr];
+                              newSections[idx] = arr[idx - 1];
+                              newSections[idx - 1] = arr[idx];
+                              handleChange('sections', newSections);
+                            }}
+                            className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30 cursor-pointer"
+                            title="Поднять выше"
+                          >
+                            ↑
+                          </button>
+
+                          {/* Reordering Down */}
+                          <button
+                            type="button"
+                            disabled={idx === arr.length - 1}
+                            onClick={() => {
+                              if (idx === arr.length - 1) return;
+                              const newSections = [...arr];
+                              newSections[idx] = arr[idx + 1];
+                              newSections[idx + 1] = arr[idx];
+                              handleChange('sections', newSections);
+                            }}
+                            className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30 cursor-pointer"
+                            title="Опустить ниже"
+                          >
+                            ↓
+                          </button>
+
+                          {/* Delete Custom Section */}
+                          {sec.isCustom && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Вы уверены, что хотите удалить свою секцию «${sec.title}»?`)) {
+                                  const newSections = arr.filter(s => s.id !== sec.id);
+                                  handleChange('sections', newSections);
+                                }
+                              }}
+                              className="p-1 text-red-400 hover:text-red-600 cursor-pointer ml-1"
+                              title="Удалить"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Custom Section Details Editing */}
+                      {sec.isCustom && (
+                        <div className="pt-3 border-t border-dashed border-stone-200 space-y-3">
+                          <div className="space-y-1">
+                            <label className="text-[9px] text-stone-400 uppercase font-bold">Названiе въ спискѣ</label>
+                            <input 
+                              type="text" 
+                              className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
+                              value={sec.title || ""}
+                              onChange={e => {
+                                const newSections = [...arr];
+                                newSections[idx] = { ...sec, title: e.target.value };
+                                handleChange('sections', newSections);
+                              }}
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[9px] text-stone-400 uppercase font-bold">Подзаголовокъ (Subtitle)</label>
+                            <input 
+                              type="text" 
+                              className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
+                              value={sec.subtitle || ""}
+                              onChange={e => {
+                                const newSections = [...arr];
+                                newSections[idx] = { ...sec, subtitle: e.target.value };
+                                handleChange('sections', newSections);
+                              }}
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[9px] text-stone-400 uppercase font-bold">Основной текстъ</label>
+                            <textarea 
+                              rows={3}
+                              className="w-full border border-stone-200 p-2 text-xs outline-none bg-transparent"
+                              value={sec.content || ""}
+                              onChange={e => {
+                                const newSections = [...arr];
+                                newSections[idx] = { ...sec, content: e.target.value };
+                                handleChange('sections', newSections);
+                              }}
+                            />
+                          </div>
+
+                          {/* Image controls aligned to isMobilePreview */}
+                          <div className="space-y-2 p-2 bg-white rounded border border-stone-100 shadow-sm">
+                            <div className="flex justify-between items-center pb-1 border-b border-stone-100">
+                              <span className="text-[8px] uppercase font-bold text-stone-400 tracking-wider">Фото секціи</span>
+                              <span className="text-[8px] font-bold text-imperial-gold uppercase tracking-wider">
+                                {isMobilePreview ? "Мобильная версія" : "Компьютерная версія"}
+                              </span>
+                            </div>
+
+                            {(() => {
+                              const imgKey = isMobilePreview ? 'imageMobile' : 'image';
+                              const currentImg = sec[imgKey] || "";
+                              const displayImg = currentImg || sec.image || "";
+                              const styleKey = isMobilePreview ? 'imageStyleMobile' : 'imageStyle';
+                              const currentStyle = sec[styleKey] || defaultImageStyle;
+                              const sectionUploadId = `${sec.id}_${imgKey}`;
+
+                              return (
+                                <div className="space-y-3">
+                                  <div className="flex gap-2 items-center">
+                                    <div className="w-10 h-10 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
+                                      {displayImg && <img src={displayImg} className="w-full h-full object-cover" />}
+                                    </div>
+                                    <div className="flex-grow">
+                                      {uploadingState[sectionUploadId] ? (
+                                        <div className="text-[8px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
+                                      ) : (
+                                        <label className="text-[8px] text-stone-400 uppercase font-bold flex justify-between items-center">
+                                          <span>Фото URL {isMobilePreview ? "(моб.)" : "(деск.)"}</span>
+                                          <span className="flex items-center gap-0.5 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[8px] font-bold">
+                                            <Plus size={8} />
+                                            Загрузить
+                                            <input 
+                                              type="file" 
+                                              accept="image/*" 
+                                              className="hidden" 
+                                              onChange={e => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                  handleImageUploadForCustomSection(file, sec.id, imgKey, (url) => {
+                                                    const newSections = [...arr];
+                                                    newSections[idx] = { ...sec, [imgKey]: url };
+                                                    handleChange('sections', newSections);
+                                                  });
+                                                }
+                                              }}
+                                            />
+                                          </span>
+                                        </label>
+                                      )}
+                                      <input 
+                                        type="text" 
+                                        className="w-full border-b border-stone-200 py-0.5 text-[11px] outline-none bg-transparent"
+                                        placeholder={isMobilePreview ? "Использовать десктопную если пусто" : "Ссылка на десктопное изображение"}
+                                        value={currentImg}
+                                        onChange={e => {
+                                          const newSections = [...arr];
+                                          newSections[idx] = { ...sec, [imgKey]: e.target.value };
+                                          handleChange('sections', newSections);
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                  <ImageStyleControls 
+                                    label={`Позиціонированіе (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
+                                    style={currentStyle} 
+                                    onChange={s => {
+                                      const newSections = [...arr];
+                                      newSections[idx] = { ...sec, [styleKey]: s };
+                                      handleChange('sections', newSections);
+                                    }} 
+                                  />
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add New Custom Section */}
+              <button
+                type="button"
+                onClick={() => {
+                  const defaultSecs = content.sections || [
+                    { id: 'story', title: 'Наша исторiя', visible: true },
+                    { id: 'schedule', title: 'Распорядокъ дня', visible: true },
+                    { id: 'details', title: 'Усадебный уставъ', visible: true },
+                    { id: 'rsvp', title: 'Почта', visible: true }
+                  ];
+                  const newId = `custom_${Date.now()}`;
+                  const newSec = {
+                    id: newId,
+                    title: `Новый раздѣлъ`,
+                    subtitle: `Благородный раздѣлъ усадьбы`,
+                    content: `Опишите здесь всѣ детали и прелести Вашего торжества.`,
+                    visible: true,
+                    isCustom: true,
+                    image: "/images/details.jpg"
+                  };
+                  handleChange('sections', [...defaultSecs, newSec]);
+                }}
+                className="w-full py-3.5 bg-white border border-stone-200 hover:border-imperial-gold hover:text-imperial-gold text-stone-700 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+              >
+                <Plus size={13} />
+                Создать новый собственный раздѣлъ
+              </button>
             </section>
           </div>
         ) : activeTab === 'colors' ? (

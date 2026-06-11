@@ -18,6 +18,19 @@ export interface ImageStyle {
   y: number;
 }
 
+export interface SectionConfig {
+  id: string;
+  title: string;
+  visible: boolean;
+  isCustom?: boolean;
+  subtitle?: string;
+  content?: string;
+  image?: string;
+  imageMobile?: string;
+  imageStyle?: ImageStyle;
+  imageStyleMobile?: ImageStyle;
+}
+
 export interface SiteContent {
   names: string;
   date: string;
@@ -45,6 +58,9 @@ export interface SiteContent {
   rsvpDeadline: string;
   footerText: string;
   manorTitle: string;
+  countdownEnabled?: boolean;
+  countdownDate?: string;
+  sections?: SectionConfig[];
   colors: {
     primary: string;
     text: string;
@@ -97,6 +113,14 @@ export const defaultContent: SiteContent = {
   rsvpDeadline: "15 мая 2026",
   footerText: "Въ ожиданіи тепла и встрѣчи.",
   manorTitle: "Усадьба времёнъ Имперiи",
+  countdownEnabled: true,
+  countdownDate: "2026-08-25T17:00",
+  sections: [
+    { id: 'story', title: 'Наша исторiя', visible: true },
+    { id: 'schedule', title: 'Распорядокъ дня', visible: true },
+    { id: 'details', title: 'Усадебный уставъ', visible: true },
+    { id: 'rsvp', title: 'Почта', visible: true }
+  ],
   colors: {
     primary: "#b5955a",
     text: "#2d342d",
