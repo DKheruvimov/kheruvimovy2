@@ -67,6 +67,8 @@ export interface SiteContent {
   ornamentHeight?: number;
   footerOrnamentHeight?: number;
   scheduleOrnamentEnabled?: boolean;
+  preloaderTitle?: string;
+  preloaderSubtitle?: string;
   sections?: SectionConfig[];
   colors: {
     primary: string;
@@ -129,6 +131,8 @@ export const defaultContent: SiteContent = {
   ornamentHeight: 20,
   footerOrnamentHeight: 20,
   scheduleOrnamentEnabled: false,
+  preloaderTitle: "Дениса & Дарьи",
+  preloaderSubtitle: "Усадьба Херувимовых",
   sections: [
     { id: 'story', title: 'Наша исторiя', visible: true },
     { id: 'schedule', title: 'Распорядокъ дня', visible: true },

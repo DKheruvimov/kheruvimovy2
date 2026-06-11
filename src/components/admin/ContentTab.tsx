@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SiteContent, defaultImageStyle } from '../../types';
-import { Plus, Upload, Smartphone, Trash2 } from 'lucide-react';
+import { Plus, Upload, Smartphone, Trash2, Sparkles, Play, Eye } from 'lucide-react';
 import { ImageStyleControls } from './ImageStyleControls';
 
 interface ContentTabProps {
@@ -9,6 +9,8 @@ interface ContentTabProps {
   uploadingState: Record<string, boolean>;
   isMobilePreview: boolean;
   onMobilePreviewToggle: () => void;
+  isTestingPreloader: boolean;
+  onTestPreloaderToggle: (val: boolean) => void;
   handleImageUploadForField: (e: React.ChangeEvent<HTMLInputElement>, field: keyof SiteContent) => void;
   handleImageUploadForCustomSection: (
     file: File,
@@ -24,6 +26,8 @@ export const ContentTab: React.FC<ContentTabProps> = ({
   uploadingState,
   isMobilePreview,
   onMobilePreviewToggle,
+  isTestingPreloader,
+  onTestPreloaderToggle,
   handleImageUploadForField,
   handleImageUploadForCustomSection,
 }) => {
@@ -285,6 +289,60 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* Loading Screen (Preloader) Configuration */}
+      <section className="space-y-6">
+        <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Экран загрузки (Прелоадер)</h3>
+        <div className="bg-white rounded-xl p-5 border border-stone-150 shadow-sm space-y-4 text-left">
+          <p className="text-[10px] text-stone-400 -mt-1 font-sans italic">Приветственный экран с усадебным орнаментом и каллиграфическим заголовком.</p>
+          
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[10px] text-stone-400 uppercase font-bold flex justify-between">
+                <span>Основной заголовок (имена)</span>
+                <span className="text-[9px] text-stone-300 font-normal select-none">В стиле каллиграфии</span>
+              </label>
+              <input 
+                type="text" 
+                className="w-full border-b border-stone-200 py-1 focus:border-imperial-gold outline-none text-sm bg-transparent font-serif italic text-stone-800"
+                value={content.preloaderTitle || ""}
+                placeholder="Дениса & Дарьи"
+                onChange={e => onChange('preloaderTitle', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] text-stone-400 uppercase font-bold flex justify-between">
+                <span>Подзаголовок заставки</span>
+                <span className="text-[9px] text-stone-300 font-normal select-none">Шрифт с разрядкой</span>
+              </label>
+              <input 
+                type="text" 
+                className="w-full border-b border-stone-200 py-1 focus:border-imperial-gold outline-none text-xs bg-transparent tracking-widest text-stone-700"
+                value={content.preloaderSubtitle || ""}
+                placeholder="Усадьба Херувимовых"
+                onChange={e => onChange('preloaderSubtitle', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="text-[9px] text-stone-500 uppercase font-bold">Быстрый тест заставки</span>
+              <p className="text-[8px] text-stone-400 font-light font-sans">Включить полноэкранный интерактивный предпросмотр без обновления страницы</p>
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => onTestPreloaderToggle(true)}
+              className="px-3.5 py-1.5 bg-imperial-gold/10 hover:bg-imperial-gold/20 text-imperial-gold rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer self-start sm:self-center border border-imperial-gold/20 hover:scale-103"
+            >
+              <Play size={10} className="fill-current" />
+              Запустить тест
+            </button>
           </div>
         </div>
       </section>

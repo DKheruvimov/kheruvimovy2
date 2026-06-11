@@ -24,6 +24,8 @@ interface AdminPanelProps {
   onAdminLogout: () => void;
   isMobilePreview: boolean;
   onMobilePreviewToggle: () => void;
+  isTestingPreloader: boolean;
+  onTestPreloaderToggle: (val: boolean) => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ 
@@ -36,7 +38,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onYandexLogin,
   onAdminLogout,
   isMobilePreview,
-  onMobilePreviewToggle
+  onMobilePreviewToggle,
+  isTestingPreloader,
+  onTestPreloaderToggle
 }) => {
   const [activeTab, setActiveTab] = useState<'content' | 'colors' | 'rsvps' | 'access' | 'yandex_config' | 'media'>('content');
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -623,6 +627,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             uploadingState={uploadingState}
             isMobilePreview={isMobilePreview}
             onMobilePreviewToggle={onMobilePreviewToggle}
+            isTestingPreloader={isTestingPreloader}
+            onTestPreloaderToggle={onTestPreloaderToggle}
             handleImageUploadForField={handleImageUploadForField}
             handleImageUploadForCustomSection={handleImageUploadForCustomSection}
           />

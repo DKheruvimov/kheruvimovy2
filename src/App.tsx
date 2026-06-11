@@ -57,10 +57,10 @@ const LoadingRings = () => (
   </svg>
 );
 
-const Preloader = () => (
+const Preloader = ({ content, zIndex = "z-[300]" }: { content: SiteContent; zIndex?: string }) => (
   <motion.div
     exit={{ opacity: 0, transition: { duration: 1.2, ease: "easeInOut" } }}
-    className="fixed inset-0 z-[100] bg-warm-cream flex flex-col items-center justify-center"
+    className={`fixed inset-0 ${zIndex} bg-warm-cream flex flex-col items-center justify-center p-4 text-center`}
   >
     <LoadingRings />
     <motion.div
@@ -69,11 +69,15 @@ const Preloader = () => (
       transition={{ delay: 1, duration: 1.5 }}
       className="text-center mt-8 text-stone-900"
     >
-      <h2 className="font-display text-4xl italic text-estate-green tracking-[0.1em] font-light">Дениса & Дарьи</h2>
+      <h2 className="font-display text-3xl md:text-4xl italic text-estate-green tracking-[0.1em] font-light">
+        {content?.preloaderTitle || "Дениса & Дарьи"}
+      </h2>
       <div className="flex items-center justify-center gap-4 my-8">
         <div className="w-12 h-px bg-imperial-gold/30" />
       </div>
-      <p className="text-[10px] uppercase tracking-[0.6em] text-stone-400">Усадьба Херувимовых</p>
+      <p className="text-[9px] md:text-[10px] uppercase tracking-[0.6em] text-stone-400">
+        {content?.preloaderSubtitle || "Усадьба Херувимовых"}
+      </p>
     </motion.div>
   </motion.div>
 );
@@ -99,6 +103,7 @@ export default function App() {
   });
 
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isTestingPreloader, setIsTestingPreloader] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -123,6 +128,18 @@ export default function App() {
       return () => window.removeEventListener('resize', checkMobile);
     }
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsTestingPreloader(false);
+      }
+    };
+    if (isTestingPreloader) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isTestingPreloader]);
 
   const [formState, setFormState] = useState({
     name: "",
@@ -643,7 +660,39 @@ export default function App() {
     return (
       <div ref={containerRef} className="relative bg-warm-cream selection:bg-imperial-gold selection:text-white min-h-screen" style={{ color: displayContent?.colors?.text || defaultContent.colors.text }}>
         <AnimatePresence>
-          {isLoading && <Preloader />}
+          {isLoading && <Preloader content={content} />}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isTestingPreloader && (
+            <div 
+              onClick={() => setIsTestingPreloader(false)}
+              className="fixed inset-0 z-[9991] bg-warm-cream animate-fadeIn cursor-pointer"
+              title="Нажмите в любом месте для выхода"
+            >
+              <Preloader content={previewContent} zIndex="z-[9992]" />
+              <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsTestingPreloader(false);
+                  }}
+                  className="px-4 py-2.5 bg-stone-900 hover:bg-stone-850 text-imperial-gold rounded-full text-[10px] font-bold uppercase tracking-wider shadow-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all cursor-pointer font-sans border border-imperial-gold/30 animate-pulse"
+                >
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                  Закрыть предпросмотр
+                </button>
+              </div>
+
+              {/* Centered helper bar at the bottom */}
+              <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none select-none text-center">
+                <span className="bg-stone-900/95 text-stone-300 border border-imperial-gold/20 text-[9px] font-sans font-medium tracking-[0.2em] uppercase px-4 py-2 rounded-full shadow-2xl flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-imperial-gold animate-bounce" />
+                  Кликните в любом месте экрана или нажмите Esc, чтобы вернуться
+                </span>
+              </div>
+            </div>
+          )}
         </AnimatePresence>
 
         <AnimatePresence>
@@ -659,6 +708,8 @@ export default function App() {
               onAdminLogout={handleAdminLogout}
               isMobilePreview={isMobilePreview}
               onMobilePreviewToggle={() => setIsMobilePreview(!isMobilePreview)}
+              isTestingPreloader={isTestingPreloader}
+              onTestPreloaderToggle={setIsTestingPreloader}
             />
           )}
         </AnimatePresence>
