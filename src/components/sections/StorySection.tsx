@@ -92,7 +92,7 @@ export const StorySection: React.FC<StorySectionProps> = ({
             />
           </p>
           <div className="flex items-center gap-6 mt-4">
-            <Ornament className="w-16 opacity-100" />
+            <Ornament displayContent={displayContent} className="w-16 opacity-100" />
             <span className="font-display italic text-2xl text-stone-400">
               <EditableText 
                 value={displayContent.signature} 

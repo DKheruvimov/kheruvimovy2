@@ -617,7 +617,7 @@ export default function App() {
 
         {/* Footer */}
         <footer className="py-24 bg-stone-950 text-center border-t border-white/5 text-white">
-          <Ornament className="mx-auto mb-12 opacity-20" />
+          <Ornament displayContent={displayContent} customHeight={displayContent.footerOrnamentHeight} className="mx-auto mb-12 opacity-20" />
           <p className="font-display italic text-white/10 text-4xl mb-12 tracking-wider">
             <EditableText 
               value={displayContent.footerText} 

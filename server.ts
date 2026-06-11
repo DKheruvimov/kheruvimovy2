@@ -356,6 +356,58 @@ async function startServer() {
     }
   });
 
+  // GET list of all uploaded media files (requires admin token)
+  app.get("/api/uploads", (req, res) => {
+    if (!verifyAdminToken(req)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    try {
+      if (fs.existsSync(UPLOADS_DIR)) {
+        const files = fs.readdirSync(UPLOADS_DIR);
+        const result = files.map(file => {
+          const filePath = path.join(UPLOADS_DIR, file);
+          const stat = fs.statSync(filePath);
+          return {
+            name: file,
+            url: `/uploads/${file}`,
+            size: stat.size,
+            mtime: stat.mtime.toISOString()
+          };
+        });
+        // Sort by most recently modified
+        result.sort((a, b) => new Date(b.mtime).getTime() - new Date(a.mtime).getTime());
+        res.json(result);
+      } else {
+        res.json([]);
+      }
+    } catch (err) {
+      console.error("Failed to read uploads directory", err);
+      res.status(500).json({ error: "Failed to read uploads list" });
+    }
+  });
+
+  // DELETE uploaded media file by name (requires admin token)
+  app.delete("/api/uploads/:name", (req, res) => {
+    if (!verifyAdminToken(req)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const { name } = req.params;
+    const sanitizedName = path.basename(name);
+    const filePath = path.join(UPLOADS_DIR, sanitizedName);
+
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "File not found" });
+      }
+    } catch (err) {
+      console.error("Failed to delete file", err);
+      res.status(500).json({ error: "Failed to delete file" });
+    }
+  });
+
   // GET admin Yandex config
   app.get("/api/admin/yandex-config", (req, res) => {
     if (!verifyAdminToken(req)) {

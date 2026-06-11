@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from "motion/react";
-import { SiteContent, ScheduleItem, DetailItem, defaultImageStyle } from '../types';
+import { SiteContent, defaultImageStyle } from '../types';
 import { 
-  Save, Plus, Trash2, X, Image as ImageIcon, Users, Layout, Palette, 
-  Shield, Link2, Unlink, LogOut, Key, Check, Settings, Maximize2, Minimize2,
-  AlignLeft, AlignRight, Smartphone, Upload
+  Save, X, Image as ImageIcon, Users, Layout, Palette, 
+  Shield, Settings, AlignLeft, AlignRight, Smartphone, Minimize2, Maximize2
 } from 'lucide-react';
+
+import { ContentTab } from './admin/ContentTab';
+import { ColorsTab } from './admin/ColorsTab';
+import { RsvpsTab } from './admin/RsvpsTab';
+import { AccessTab } from './admin/AccessTab';
+import { YandexConfigTab } from './admin/YandexConfigTab';
+import { MediaTab } from './admin/MediaTab';
 
 interface AdminPanelProps {
   content: SiteContent;
@@ -20,90 +26,6 @@ interface AdminPanelProps {
   onMobilePreviewToggle: () => void;
 }
 
-const ImageStyleControls = ({ 
-  label, 
-  style, 
-  onChange 
-}: { 
-  label: string, 
-  style: any, 
-  onChange: (newStyle: any) => void 
-}) => (
-  <div className="p-3 bg-stone-50/50 rounded-lg space-y-3 border border-stone-100">
-    <p className="text-[9px] uppercase font-bold text-stone-400 tracking-wider">{label}</p>
-    <div className="grid grid-cols-1 gap-3">
-      <div className="space-y-1">
-        <label className="text-[9px] text-stone-400 flex justify-between uppercase">Масштаб</label>
-        <div className="flex items-center gap-3">
-          <input 
-            type="range" min="0.5" max="5" step="0.01" 
-            value={style.scale} 
-            onChange={e => onChange({ ...style, scale: parseFloat(e.target.value) })}
-            className="flex-grow h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-imperial-gold"
-          />
-          <input 
-            type="number" step="0.01"
-            value={style.scale} 
-            onChange={e => onChange({ ...style, scale: parseFloat(e.target.value) || 0 })}
-            className="w-16 border rounded px-1 py-0.5 text-[10px] text-stone-600 outline-none focus:border-imperial-gold"
-          />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <label className="text-[9px] text-stone-400 flex justify-between uppercase">Угол (°)</label>
-        <div className="flex items-center gap-3">
-          <input 
-            type="range" min="-180" max="180" step="1" 
-            value={style.rotate} 
-            onChange={e => onChange({ ...style, rotate: parseInt(e.target.value) })}
-            className="flex-grow h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-imperial-gold"
-          />
-          <input 
-            type="number"
-            value={style.rotate} 
-            onChange={e => onChange({ ...style, rotate: parseInt(e.target.value) || 0 })}
-            className="w-16 border rounded px-1 py-0.5 text-[10px] text-stone-600 outline-none focus:border-imperial-gold"
-          />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <label className="text-[9px] text-stone-400 flex justify-between uppercase">Сдвиг X (px)</label>
-        <div className="flex items-center gap-3">
-          <input 
-            type="range" min="-400" max="400" step="1" 
-            value={style.x} 
-            onChange={e => onChange({ ...style, x: parseInt(e.target.value) })}
-            className="flex-grow h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-imperial-gold"
-          />
-          <input 
-            type="number"
-            value={style.x} 
-            onChange={e => onChange({ ...style, x: parseInt(e.target.value) || 0 })}
-            className="w-16 border rounded px-1 py-0.5 text-[10px] text-stone-600 outline-none focus:border-imperial-gold"
-          />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <label className="text-[9px] text-stone-400 flex justify-between uppercase">Сдвиг Y (px)</label>
-        <div className="flex items-center gap-3">
-          <input 
-            type="range" min="-400" max="400" step="1" 
-            value={style.y} 
-            onChange={e => onChange({ ...style, y: parseInt(e.target.value) })}
-            className="flex-grow h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-imperial-gold"
-          />
-          <input 
-            type="number"
-            value={style.y} 
-            onChange={e => onChange({ ...style, y: parseInt(e.target.value) || 0 })}
-            className="w-16 border rounded px-1 py-0.5 text-[10px] text-stone-600 outline-none focus:border-imperial-gold"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
 export const AdminPanel: React.FC<AdminPanelProps> = ({ 
   content, 
   onPreviewUpdate, 
@@ -116,12 +38,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   isMobilePreview,
   onMobilePreviewToggle
 }) => {
-  const [activeTab, setActiveTab] = useState<'content' | 'colors' | 'rsvps' | 'access' | 'yandex_config'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'colors' | 'rsvps' | 'access' | 'yandex_config' | 'media'>('content');
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [rsvps, setRsvps] = useState<any[]>([]);
   const [isLoadingRsvps, setIsLoadingRsvps] = useState(false);
   const [linkedYandexList, setLinkedYandexList] = useState<any[]>([]);
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
+
+  // Media Library state
+  const [mediaFiles, setMediaFiles] = useState<any[]>([]);
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false);
+  const [isDeletingMediaName, setIsDeletingMediaName] = useState<string | null>(null);
+  const [mediaError, setMediaError] = useState('');
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   // Resizing and Docking state
   const [panelWidth, setPanelWidth] = useState(() => {
@@ -193,8 +122,65 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       fetchLinkedYandex();
     } else if (activeTab === 'yandex_config') {
       fetchYandexConfig();
+    } else if (activeTab === 'media') {
+      fetchMediaFiles();
     }
   }, [activeTab]);
+
+  const fetchMediaFiles = async () => {
+    if (!adminToken) return;
+    setIsLoadingMedia(true);
+    setMediaError('');
+    try {
+      const res = await fetch('/api/uploads', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMediaFiles(data);
+      } else {
+        setMediaError('Не удалось загрузить список файлов');
+      }
+    } catch (err) {
+      console.error(err);
+      setMediaError('Ошибка подключения к серверу');
+    } finally {
+      setIsLoadingMedia(false);
+    }
+  };
+
+  const handleDeleteMedia = async (name: string) => {
+    if (!adminToken) return;
+    setIsDeletingMediaName(name);
+    try {
+      const res = await fetch(`/api/uploads/${name}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (res.ok) {
+        setMediaFiles(prev => prev.filter(f => f.name !== name));
+      } else {
+        alert('Не удалось удалить файл');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка при соединении с сервером');
+    } finally {
+      setIsDeletingMediaName(null);
+    }
+  };
+
+  const handleCopyUrl = (url: string) => {
+    const fullUrl = `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl)
+      .then(() => {
+        setCopiedUrl(url);
+        setTimeout(() => setCopiedUrl(null), 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy", err);
+      });
+  };
 
   const fetchYandexConfig = async () => {
     if (!adminToken) return;
@@ -290,7 +276,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Unlink Yandex user
   const handleUnlinkYandex = async (yandexId: string) => {
     if (!adminToken) return;
-    if (!window.confirm("Вы уверены, что хотите отвязать этот аккаунт Яндекс? Он потеряет административный доступ.")) return;
     try {
       const res = await fetch('/api/admin/unlink', {
         method: 'POST',
@@ -363,7 +348,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleImageUploadForField = async (
     e: React.ChangeEvent<HTMLInputElement>, 
-    field: 'heroImage' | 'storyImage' | 'detailsImage' | 'heroImageMobile' | 'storyImageMobile' | 'detailsImageMobile' | 'faviconUrl'
+    field: 'heroImage' | 'storyImage' | 'detailsImage' | 'heroImageMobile' | 'storyImageMobile' | 'detailsImageMobile' | 'faviconUrl' | 'customOrnamentUrl'
   ) => {
     const file = e.target.files?.[0];
     if (!file || !adminToken) return;
@@ -471,7 +456,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleDeleteRsvp = async (id: string, name: string) => {
     if (!adminToken) return;
-    if (!window.confirm(`Вы уверены, что хотите удалить подтверждение от ${name}?`)) return;
     try {
       const res = await fetch(`/api/rsvp/${id}`, {
         method: 'DELETE',
@@ -588,6 +572,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <Settings size={18} />
             <span className="font-display italic text-lg leading-none pt-1">Yandex ID</span>
           </button>
+          <button 
+            onClick={() => setActiveTab('media')}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${activeTab === 'media' ? 'bg-imperial-gold/10 text-imperial-gold' : 'hover:bg-stone-100 text-stone-400'}`}
+          >
+            <ImageIcon size={18} />
+            <span className="font-display italic text-lg leading-none pt-1">Медиатека</span>
+          </button>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button 
@@ -626,1070 +617,63 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
       <div className="flex-grow overflow-y-auto px-6 py-8">
         {activeTab === 'content' ? (
-          <div className="space-y-10 pb-20">
-            <div className="bg-imperial-gold/5 p-4 rounded-lg border border-imperial-gold/10">
-              <p className="text-[10px] text-imperial-gold font-bold uppercase tracking-widest">Settings mode</p>
-              <p className="text-[10px] text-stone-500 mt-1">Отредактируйте параметры и нажмите «Сохранить».</p>
-            </div>
-
-            {/* General Info */}
-            <section className="space-y-6">
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Общая информация</h3>
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-stone-400 uppercase font-bold">Имена на главной</label>
-                  <input 
-                    type="text" 
-                    className="w-full border-b border-stone-200 py-1 focus:border-imperial-gold outline-none text-sm bg-transparent"
-                    value={content.names}
-                    onChange={e => handleChange('names', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-stone-400 uppercase font-bold">Дата</label>
-                  <input 
-                    type="text" 
-                    className="w-full border-b border-stone-200 py-1 focus:border-imperial-gold outline-none text-sm bg-transparent"
-                    value={content.date}
-                    onChange={e => handleChange('date', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-stone-400 uppercase font-bold">Город</label>
-                  <input 
-                    type="text" 
-                    className="w-full border-b border-stone-200 py-1 focus:border-imperial-gold outline-none text-sm bg-transparent"
-                    value={content.location}
-                    onChange={e => handleChange('location', e.target.value)}
-                  />
-                </div>
-                
-                {/* Countdown Configuration */}
-                <div className="pt-2 border-t border-stone-100 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-[10px] text-stone-500 uppercase font-bold">Таймер обратного отсчета</label>
-                      <p className="text-[9px] text-stone-400 tracking-wide font-light">Добавьте красивое тиканье секунд на сайт</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleChange('countdownEnabled', !content.countdownEnabled)}
-                      className={`px-3 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg border transition-all cursor-pointer shadow-sm ${
-                        content.countdownEnabled
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' 
-                        : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
-                      }`}
-                    >
-                      {content.countdownEnabled ? "Включенъ" : "Выключенъ"}
-                    </button>
-                  </div>
-                  {content.countdownEnabled && (
-                    <div className="pt-1 space-y-1 entry-animation">
-                      <label className="text-[9px] text-stone-400 uppercase font-bold tracking-widest">Целевая дата и время</label>
-                      <input 
-                        type="datetime-local" 
-                        className="w-full border border-stone-200 rounded px-2.5 py-1.5 focus:border-imperial-gold outline-none text-xs bg-white/50 text-stone-800"
-                        value={content.countdownDate || "2026-08-25T17:00"}
-                        onChange={e => handleChange('countdownDate', e.target.value)}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Favicon Configuration */}
-                <div className="pt-4 border-t border-stone-100 space-y-3">
-                  <div className="space-y-0.5">
-                    <label className="text-[10px] text-stone-500 uppercase font-bold">Иконка сайта (Favicon)</label>
-                    <p className="text-[9px] text-stone-400 tracking-wide font-light">Добавьте иконку для отображения во вкладке браузера (рекомендуется .svg или .png)</p>
-                  </div>
-                  
-                  <div className="flex gap-3 items-center">
-                    <div className="w-12 h-12 bg-stone-50 border border-stone-200 rounded-lg flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0 shadow-sm text-stone-300">
-                      {content.faviconUrl ? (
-                        <img 
-                          src={content.faviconUrl} 
-                          className="w-full h-full object-contain" 
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <span className="text-[10px] text-stone-300 font-bold uppercase">Fav</span>
-                      )}
-                    </div>
-                    
-                    <div className="flex-grow space-y-1.5">
-                      {uploadingState['faviconUrl'] ? (
-                        <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка иконки...</div>
-                      ) : (
-                        <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
-                          <span>Иконка URL</span>
-                          <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
-                            <Upload size={10} />
-                            Загрузить файл
-                            <input 
-                              type="file" 
-                              accept=".svg,.png,.ico,.jpg,.jpeg,.webp" 
-                              className="hidden" 
-                              onChange={e => handleImageUploadForField(e, 'faviconUrl')} 
-                            />
-                          </span>
-                        </label>
-                      )}
-                      <input 
-                        type="text" 
-                        className="w-full border-b border-stone-200 py-0.5 focus:border-imperial-gold outline-none text-xs bg-transparent text-stone-800"
-                        value={content.faviconUrl || ""}
-                        placeholder="/favicon.svg"
-                        onChange={e => handleChange('faviconUrl', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-             {/* Media */}
-            <section className="space-y-6">
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Изображения</h3>
-              
-              {/* Quick toggle banner for the modes */}
-              <div className="flex items-center justify-between p-3.5 bg-stone-50 rounded-xl border border-stone-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <span className={`p-2 rounded-lg ${isMobilePreview ? 'bg-imperial-gold/15 text-imperial-gold border border-imperial-gold/20' : 'bg-stone-100 text-stone-500'}`}>
-                    <Smartphone size={16} />
-                  </span>
-                  <div>
-                    <h4 className="text-[9px] uppercase tracking-wider font-bold text-stone-400">
-                      Редактируемый режимъ:
-                    </h4>
-                    <span className="text-xs font-semibold text-stone-800">
-                      {isMobilePreview ? "Мобильная версія 📱" : "Компьютерная версія 💻"}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={onMobilePreviewToggle}
-                  className="px-3 py-1.5 bg-white border border-stone-200 hover:border-imperial-gold hover:text-imperial-gold text-stone-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm active:scale-95 cursor-pointer"
-                >
-                  {isMobilePreview ? "На десктопъ" : "На мобильн."}
-                </button>
-              </div>
-
-              <div className="space-y-8">
-                {(() => {
-                  const heroField: keyof SiteContent = isMobilePreview ? 'heroImageMobile' : 'heroImage';
-                  const heroStyleField: keyof SiteContent = isMobilePreview ? 'heroStyleMobile' : 'heroStyle';
-                  const currentHeroImage = content[heroField] as string || "";
-                  const currentHeroStyle = content[heroStyleField] || defaultImageStyle;
-                  const displayHeroSrc = currentHeroImage || content.heroImage;
-
-                  const storyField: keyof SiteContent = isMobilePreview ? 'storyImageMobile' : 'storyImage';
-                  const storyStyleField: keyof SiteContent = isMobilePreview ? 'storyStyleMobile' : 'storyStyle';
-                  const currentStoryImage = content[storyField] as string || "";
-                  const currentStoryStyle = content[storyStyleField] || defaultImageStyle;
-                  const displayStorySrc = currentStoryImage || content.storyImage;
-
-                  const detailsField: keyof SiteContent = isMobilePreview ? 'detailsImageMobile' : 'detailsImage';
-                  const detailsStyleField: keyof SiteContent = isMobilePreview ? 'detailsStyleMobile' : 'detailsStyle';
-                  const currentDetailsImage = content[detailsField] as string || "";
-                  const currentDetailsStyle = content[detailsStyleField] || defaultImageStyle;
-                  const displayDetailsSrc = currentDetailsImage || content.detailsImage;
-
-                  return (
-                    <>
-                      {/* 1. HERO IMAGE */}
-                      <div className="p-4 bg-stone-50 rounded-xl space-y-4 border border-stone-200/60">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-xs font-semibold text-stone-700 font-display italic">1. Главный экран (Hero)</h4>
-                          <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
-                            {isMobilePreview ? "Мобильное фото" : "Десктопное фото"}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-3 p-3 bg-white rounded-lg border border-stone-150 shadow-sm">
-                          <div className="flex gap-3 items-center">
-                            <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
-                              <img src={displayHeroSrc} className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-grow">
-                              {uploadingState[heroField] ? (
-                                <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
-                              ) : (
-                                <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
-                                  <span>Фото (URL)</span>
-                                  <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
-                                    <Plus size={10} />
-                                    Загрузить
-                                    <input 
-                                      type="file" 
-                                      accept="image/*" 
-                                      className="hidden" 
-                                      onChange={e => handleImageUploadForField(e, heroField)}
-                                    />
-                                  </span>
-                                </label>
-                              )}
-                              <input 
-                                type="text" 
-                                className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
-                                placeholder={isMobilePreview ? "Использовать десктопную если пусто" : "Ссылка на десктопное изображение"}
-                                value={currentHeroImage}
-                                onChange={e => handleChange(heroField, e.target.value)}
-                              />
-                            </div>
-                          </div>
-                          <ImageStyleControls 
-                            label={`Настройка отображения (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
-                            style={currentHeroStyle} 
-                            onChange={s => handleChange(heroStyleField, s)} 
-                          />
-                        </div>
-                      </div>
-
-                      {/* 2. STORY IMAGE */}
-                      <div className="p-4 bg-stone-50 rounded-xl space-y-4 border border-stone-200/60">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-xs font-semibold text-stone-700 font-display italic">2. О нашем союзе (История)</h4>
-                          <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
-                            {isMobilePreview ? "Мобильное фото" : "Десктопное фото"}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-3 p-3 bg-white rounded-lg border border-stone-150 shadow-sm">
-                          <div className="flex gap-3 items-center">
-                            <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
-                              <img src={displayStorySrc} className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-grow">
-                              {uploadingState[storyField] ? (
-                                <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
-                              ) : (
-                                <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
-                                  <span>Фото (URL)</span>
-                                  <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
-                                    <Plus size={10} />
-                                    Загрузить
-                                    <input 
-                                      type="file" 
-                                      accept="image/*" 
-                                      className="hidden" 
-                                      onChange={e => handleImageUploadForField(e, storyField)}
-                                    />
-                                  </span>
-                                </label>
-                              )}
-                              <input 
-                                type="text" 
-                                className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
-                                placeholder={isMobilePreview ? "Использовать десктопную если пусто" : "Ссылка на десктопное изображение"}
-                                value={currentStoryImage}
-                                onChange={e => handleChange(storyField, e.target.value)}
-                              />
-                            </div>
-                          </div>
-                          <ImageStyleControls 
-                            label={`Настройка отображения (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
-                            style={currentStoryStyle} 
-                            onChange={s => handleChange(storyStyleField, s)} 
-                          />
-                        </div>
-                      </div>
-
-                      {/* 3. DETAILS IMAGE */}
-                      <div className="p-4 bg-stone-50 rounded-xl space-y-4 border border-stone-200/60">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-xs font-semibold text-stone-700 font-display italic">3. Детали торжества (Инфо)</h4>
-                          <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
-                            {isMobilePreview ? "Мобильное фото" : "Десктопное фото"}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-3 p-3 bg-white rounded-lg border border-stone-150 shadow-sm">
-                          <div className="flex gap-3 items-center">
-                            <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
-                              <img src={displayDetailsSrc} className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-grow">
-                              {uploadingState[detailsField] ? (
-                                <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
-                              ) : (
-                                <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
-                                  <span>Фото (URL)</span>
-                                  <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
-                                    <Plus size={10} />
-                                    Загрузить
-                                    <input 
-                                      type="file" 
-                                      accept="image/*" 
-                                      className="hidden" 
-                                      onChange={e => handleImageUploadForField(e, detailsField)}
-                                    />
-                                  </span>
-                                </label>
-                              )}
-                              <input 
-                                type="text" 
-                                className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
-                                placeholder={isMobilePreview ? "Использовать десктопную если пусто" : "Ссылка на десктопное изображение"}
-                                value={currentDetailsImage}
-                                onChange={e => handleChange(detailsField, e.target.value)}
-                              />
-                            </div>
-                          </div>
-                          <ImageStyleControls 
-                            label={`Настройка отображения (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
-                            style={currentDetailsStyle} 
-                            onChange={s => handleChange(detailsStyleField, s)} 
-                          />
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </section>
-
-            {/* Story Text */}
-            <section className="space-y-6">
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Наша исторiя</h3>
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-stone-400 uppercase font-bold">Подзаголовок</label>
-                  <input 
-                    type="text" 
-                    className="w-full border-b border-stone-200 py-1 outline-none text-sm italic bg-transparent"
-                    value={content.storySubtitle}
-                    onChange={e => handleChange('storySubtitle', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-stone-400 uppercase font-bold">Описание</label>
-                  <textarea 
-                    rows={3}
-                    className="w-full border border-stone-200 p-2 text-sm outline-none focus:border-imperial-gold bg-transparent"
-                    value={content.storyDescription}
-                    onChange={e => handleChange('storyDescription', e.target.value)}
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* Schedule */}
-            <section className="space-y-6">
-              <div className="flex items-center justify-between border-b border-imperial-gold/10 pb-2">
-                <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Распорядокъ дня</h3>
-              </div>
-              <div className="space-y-4">
-                {content.schedule.map((item, idx) => (
-                  <div key={idx} className="p-3 bg-stone-50 rounded border border-stone-100 space-y-3">
-                    <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        className="w-16 border-b border-stone-200 py-1 text-xs outline-none focus:border-imperial-gold font-mono bg-transparent"
-                        value={item.time}
-                        onChange={e => {
-                          const newSchedule = [...content.schedule];
-                          newSchedule[idx] = { ...item, time: e.target.value };
-                          handleChange('schedule', newSchedule);
-                        }}
-                      />
-                      <input 
-                        type="text" 
-                        className="flex-grow border-b border-stone-200 py-1 text-xs outline-none focus:border-imperial-gold font-bold bg-transparent"
-                        value={item.event}
-                        onChange={e => {
-                          const newSchedule = [...content.schedule];
-                          newSchedule[idx] = { ...item, event: e.target.value };
-                          handleChange('schedule', newSchedule);
-                        }}
-                      />
-                    </div>
-                    <textarea 
-                      rows={1}
-                      className="w-full border-b border-stone-100 bg-transparent py-1 text-[10px] outline-none text-stone-500 italic"
-                      value={item.desc}
-                      onChange={e => {
-                        const newSchedule = [...content.schedule];
-                        newSchedule[idx] = { ...item, desc: e.target.value };
-                        handleChange('schedule', newSchedule);
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Details */}
-            <section className="space-y-6">
-              <div className="flex items-center justify-between border-b border-imperial-gold/10 pb-2">
-                <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Усадебный уставъ</h3>
-              </div>
-              <div className="space-y-4">
-                {content.details.map((item, idx) => (
-                  <div key={idx} className="p-3 bg-stone-50 rounded border border-stone-100 space-y-3">
-                    <input 
-                      type="text" 
-                      className="w-full border-b border-stone-200 py-1 text-xs outline-none focus:border-imperial-gold font-bold italic bg-transparent"
-                      value={item.title}
-                      onChange={e => {
-                        const newDetails = [...content.details];
-                        newDetails[idx] = { ...item, title: e.target.value };
-                        handleChange('details', newDetails);
-                      }}
-                    />
-                    <textarea 
-                      rows={2}
-                      className="w-full border-b border-stone-100 bg-transparent py-1 text-[10px] outline-none text-stone-500"
-                      value={item.content}
-                      onChange={e => {
-                        const newDetails = [...content.details];
-                        newDetails[idx] = { ...item, content: e.target.value };
-                        handleChange('details', newDetails);
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Section Management */}
-            <section className="space-y-6 pt-6 border-t border-stone-200">
-              <div className="space-y-1">
-                <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Управленіе секціями сайта</h3>
-                <p className="text-[10px] text-stone-400">Здесь Вы можете изменять порядокъ отображенiя, скрывать или добавлять новые собственные разделы.</p>
-              </div>
-              
-              <div className="space-y-4">
-                {(content.sections || [
-                  { id: 'story', title: 'Наша исторiя', visible: true },
-                  { id: 'schedule', title: 'Распорядокъ дня', visible: true },
-                  { id: 'details', title: 'Усадебный уставъ', visible: true },
-                  { id: 'rsvp', title: 'Почта', visible: true }
-                ]).map((sec, idx, arr) => {
-                  return (
-                    <div key={sec.id} className="p-4 bg-stone-50 rounded-xl border border-stone-200/60 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-stone-400 font-mono">#{idx + 1}</span>
-                          <span className="text-sm font-semibold text-stone-800 font-display italic">{sec.title || "Без заглавiя"}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {/* Visibility Toggle */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newSections = [...arr];
-                              newSections[idx] = { ...sec, visible: sec.visible !== false ? false : true };
-                              handleChange('sections', newSections);
-                            }}
-                            className={`px-2 py-1 text-[9px] font-bold uppercase rounded transition-colors cursor-pointer ${
-                              sec.visible !== false 
-                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
-                              : 'bg-stone-200 text-stone-500 border border-stone-300'
-                            }`}
-                          >
-                            {sec.visible !== false ? "Виденъ" : "Скрытъ"}
-                          </button>
-
-                          {/* Reordering Up */}
-                          <button
-                            type="button"
-                            disabled={idx === 0}
-                            onClick={() => {
-                              if (idx === 0) return;
-                              const newSections = [...arr];
-                              newSections[idx] = arr[idx - 1];
-                              newSections[idx - 1] = arr[idx];
-                              handleChange('sections', newSections);
-                            }}
-                            className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30 cursor-pointer"
-                            title="Поднять выше"
-                          >
-                            ↑
-                          </button>
-
-                          {/* Reordering Down */}
-                          <button
-                            type="button"
-                            disabled={idx === arr.length - 1}
-                            onClick={() => {
-                              if (idx === arr.length - 1) return;
-                              const newSections = [...arr];
-                              newSections[idx] = arr[idx + 1];
-                              newSections[idx + 1] = arr[idx];
-                              handleChange('sections', newSections);
-                            }}
-                            className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30 cursor-pointer"
-                            title="Опустить ниже"
-                          >
-                            ↓
-                          </button>
-
-                          {/* Delete Custom Section */}
-                          {sec.isCustom && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (window.confirm(`Вы уверены, что хотите удалить свою секцию «${sec.title}»?`)) {
-                                  const newSections = arr.filter(s => s.id !== sec.id);
-                                  handleChange('sections', newSections);
-                                }
-                              }}
-                              className="p-1 text-red-400 hover:text-red-600 cursor-pointer ml-1"
-                              title="Удалить"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Custom Section Details Editing */}
-                      {sec.isCustom && (
-                        <div className="pt-3 border-t border-dashed border-stone-200 space-y-3">
-                          <div className="space-y-1">
-                            <label className="text-[9px] text-stone-400 uppercase font-bold">Названiе въ спискѣ</label>
-                            <input 
-                              type="text" 
-                              className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
-                              value={sec.title || ""}
-                              onChange={e => {
-                                const newSections = [...arr];
-                                newSections[idx] = { ...sec, title: e.target.value };
-                                handleChange('sections', newSections);
-                              }}
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-[9px] text-stone-400 uppercase font-bold">Подзаголовокъ (Subtitle)</label>
-                            <input 
-                              type="text" 
-                              className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
-                              value={sec.subtitle || ""}
-                              onChange={e => {
-                                const newSections = [...arr];
-                                newSections[idx] = { ...sec, subtitle: e.target.value };
-                                handleChange('sections', newSections);
-                              }}
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-[9px] text-stone-400 uppercase font-bold">Основной текстъ</label>
-                            <textarea 
-                              rows={3}
-                              className="w-full border border-stone-200 p-2 text-xs outline-none bg-transparent"
-                              value={sec.content || ""}
-                              onChange={e => {
-                                const newSections = [...arr];
-                                newSections[idx] = { ...sec, content: e.target.value };
-                                handleChange('sections', newSections);
-                              }}
-                            />
-                          </div>
-
-                          {/* Image controls aligned to isMobilePreview */}
-                          <div className="space-y-2 p-2 bg-white rounded border border-stone-100 shadow-sm">
-                            <div className="flex justify-between items-center pb-1 border-b border-stone-100">
-                              <span className="text-[8px] uppercase font-bold text-stone-400 tracking-wider">Фото секціи</span>
-                              <span className="text-[8px] font-bold text-imperial-gold uppercase tracking-wider">
-                                {isMobilePreview ? "Мобильная версія" : "Компьютерная версія"}
-                              </span>
-                            </div>
-
-                            {(() => {
-                              const imgKey = isMobilePreview ? 'imageMobile' : 'image';
-                              const currentImg = sec[imgKey] || "";
-                              const displayImg = currentImg || sec.image || "";
-                              const styleKey = isMobilePreview ? 'imageStyleMobile' : 'imageStyle';
-                              const currentStyle = sec[styleKey] || defaultImageStyle;
-                              const sectionUploadId = `${sec.id}_${imgKey}`;
-
-                              return (
-                                <div className="space-y-3">
-                                  <div className="flex gap-2 items-center">
-                                    <div className="w-10 h-10 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
-                                      {displayImg && <img src={displayImg} className="w-full h-full object-cover" />}
-                                    </div>
-                                    <div className="flex-grow">
-                                      {uploadingState[sectionUploadId] ? (
-                                        <div className="text-[8px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
-                                      ) : (
-                                        <label className="text-[8px] text-stone-400 uppercase font-bold flex justify-between items-center">
-                                          <span>Фото URL {isMobilePreview ? "(моб.)" : "(деск.)"}</span>
-                                          <span className="flex items-center gap-0.5 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[8px] font-bold">
-                                            <Plus size={8} />
-                                            Загрузить
-                                            <input 
-                                              type="file" 
-                                              accept="image/*" 
-                                              className="hidden" 
-                                              onChange={e => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                  handleImageUploadForCustomSection(file, sec.id, imgKey, (url) => {
-                                                    const newSections = [...arr];
-                                                    newSections[idx] = { ...sec, [imgKey]: url };
-                                                    handleChange('sections', newSections);
-                                                  });
-                                                }
-                                              }}
-                                            />
-                                          </span>
-                                        </label>
-                                      )}
-                                      <input 
-                                        type="text" 
-                                        className="w-full border-b border-stone-200 py-0.5 text-[11px] outline-none bg-transparent"
-                                        placeholder={isMobilePreview ? "Использовать десктопную если пусто" : "Ссылка на десктопное изображение"}
-                                        value={currentImg}
-                                        onChange={e => {
-                                          const newSections = [...arr];
-                                          newSections[idx] = { ...sec, [imgKey]: e.target.value };
-                                          handleChange('sections', newSections);
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-                                  <ImageStyleControls 
-                                    label={`Позиціонированіе (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
-                                    style={currentStyle} 
-                                    onChange={s => {
-                                      const newSections = [...arr];
-                                      newSections[idx] = { ...sec, [styleKey]: s };
-                                      handleChange('sections', newSections);
-                                    }} 
-                                  />
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Add New Custom Section */}
-              <button
-                type="button"
-                onClick={() => {
-                  const defaultSecs = content.sections || [
-                    { id: 'story', title: 'Наша исторiя', visible: true },
-                    { id: 'schedule', title: 'Распорядокъ дня', visible: true },
-                    { id: 'details', title: 'Усадебный уставъ', visible: true },
-                    { id: 'rsvp', title: 'Почта', visible: true }
-                  ];
-                  const newId = `custom_${Date.now()}`;
-                  const newSec = {
-                    id: newId,
-                    title: `Новый раздѣлъ`,
-                    subtitle: `Благородный раздѣлъ усадьбы`,
-                    content: `Опишите здесь всѣ детали и прелести Вашего торжества.`,
-                    visible: true,
-                    isCustom: true,
-                    image: "/images/details.jpg"
-                  };
-                  handleChange('sections', [...defaultSecs, newSec]);
-                }}
-                className="w-full py-3.5 bg-white border border-stone-200 hover:border-imperial-gold hover:text-imperial-gold text-stone-700 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
-              >
-                <Plus size={13} />
-                Создать новый собственный раздѣлъ
-              </button>
-            </section>
-          </div>
+          <ContentTab
+            content={content}
+            onChange={handleChange}
+            uploadingState={uploadingState}
+            isMobilePreview={isMobilePreview}
+            onMobilePreviewToggle={onMobilePreviewToggle}
+            handleImageUploadForField={handleImageUploadForField}
+            handleImageUploadForCustomSection={handleImageUploadForCustomSection}
+          />
         ) : activeTab === 'colors' ? (
-          <div className="space-y-8 pb-20">
-            <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Усадебная палитра</h3>
-            <div className="grid grid-cols-1 gap-8">
-              {/* Primary Color */}
-              <div className="space-y-3">
-                <label className="text-[10px] text-stone-400 uppercase font-bold flex justify-between">
-                  Основной цвет (Золото)
-                  <span className="font-mono lowercase text-[8px] opacity-50 tracking-normal">{content.colors?.primary}</span>
-                </label>
-                <div className="flex gap-3 items-center">
-                  <input 
-                    type="color" 
-                    className="w-12 h-12 rounded-lg border-2 border-stone-100 cursor-pointer overflow-hidden"
-                    value={content.colors?.primary || "#b5955a"}
-                    onChange={e => handleChange('colors', { ...content.colors, primary: e.target.value, accent: e.target.value })}
-                  />
-                  <div className="flex-grow space-y-1">
-                    <input 
-                      type="text" 
-                      className="w-full border-b border-stone-200 py-1 outline-none text-xs font-mono bg-transparent"
-                      value={content.colors?.primary || ""}
-                      onChange={e => handleChange('colors', { ...content.colors, primary: e.target.value, accent: e.target.value })}
-                    />
-                    <p className="text-[8px] text-stone-300 uppercase tracking-widest">Влияет на орнаменты, иконки и акценты</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Text Color */}
-              <div className="space-y-3">
-                <label className="text-[10px] text-stone-400 uppercase font-bold flex justify-between">
-                  Цвет текста
-                  <span className="font-mono lowercase text-[8px] opacity-50 tracking-normal">{content.colors?.text}</span>
-                </label>
-                <div className="flex gap-3 items-center">
-                  <input 
-                    type="color" 
-                    className="w-12 h-12 rounded-lg border-2 border-stone-100 cursor-pointer overflow-hidden"
-                    value={content.colors?.text || "#2d342d"}
-                    onChange={e => handleChange('colors', { ...content.colors, text: e.target.value })}
-                  />
-                  <div className="flex-grow space-y-1">
-                    <input 
-                      type="text" 
-                      className="w-full border-b border-stone-200 py-1 outline-none text-xs font-mono bg-transparent"
-                      value={content.colors?.text || ""}
-                      onChange={e => handleChange('colors', { ...content.colors, text: e.target.value })}
-                    />
-                    <p className="text-[8px] text-stone-300 uppercase tracking-widest">Основной цвет заголовков и описаний</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Hover Color */}
-              <div className="space-y-3">
-                <label className="text-[10px] text-stone-400 uppercase font-bold flex justify-between">
-                  Цвет заливки (Hover)
-                  <span className="font-mono lowercase text-[8px] opacity-50 tracking-normal">{content.colors?.hover}</span>
-                </label>
-                <div className="flex gap-3 items-center">
-                  <input 
-                    type="color" 
-                    className="w-12 h-12 rounded-lg border-2 border-stone-100 cursor-pointer overflow-hidden"
-                    value={content.colors?.hover || "#2d342d"}
-                    onChange={e => handleChange('colors', { ...content.colors, hover: e.target.value })}
-                  />
-                  <div className="flex-grow space-y-1">
-                    <input 
-                      type="text" 
-                      className="w-full border-b border-stone-200 py-1 outline-none text-xs font-mono bg-transparent"
-                      value={content.colors?.hover || ""}
-                      onChange={e => handleChange('colors', { ...content.colors, hover: e.target.value })}
-                    />
-                    <p className="text-[8px] text-stone-300 uppercase tracking-widest">Цвет элементов при наведiи (например, иконки)</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Background Color */}
-              <div className="space-y-3">
-                <label className="text-[10px] text-stone-400 uppercase font-bold flex justify-between">
-                  Фон страниц
-                  <span className="font-mono lowercase text-[8px] opacity-50 tracking-normal">{content.colors?.bg}</span>
-                </label>
-                <div className="flex gap-3 items-center">
-                  <input 
-                    type="color" 
-                    className="w-12 h-12 rounded-lg border-2 border-stone-100 cursor-pointer overflow-hidden"
-                    value={content.colors?.bg || "#faf7f0"}
-                    onChange={e => handleChange('colors', { ...content.colors, bg: e.target.value })}
-                  />
-                  <div className="flex-grow space-y-1">
-                    <input 
-                      type="text" 
-                      className="w-full border-b border-stone-200 py-1 outline-none text-xs font-mono bg-transparent"
-                      value={content.colors?.bg || ""}
-                      onChange={e => handleChange('colors', { ...content.colors, bg: e.target.value })}
-                    />
-                    <p className="text-[8px] text-stone-300 uppercase tracking-widest">Общий фон светлых секций</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quote Block Color */}
-              <div className="space-y-3">
-                <label className="text-[10px] text-stone-400 uppercase font-bold flex justify-between">
-                  Фон блока цитаты
-                  <span className="font-mono lowercase text-[8px] opacity-50 tracking-normal">{content.colors?.quoteBg}</span>
-                </label>
-                <div className="flex gap-3 items-center">
-                  <input 
-                    type="color" 
-                    className="w-12 h-12 rounded-lg border-2 border-stone-100 cursor-pointer overflow-hidden"
-                    value={content.colors?.quoteBg || "#2d342d"}
-                    onChange={e => handleChange('colors', { ...content.colors, quoteBg: e.target.value })}
-                  />
-                  <div className="flex-grow space-y-1">
-                    <input 
-                      type="text" 
-                      className="w-full border-b border-stone-200 py-1 outline-none text-xs font-mono bg-transparent"
-                      value={content.colors?.quoteBg || ""}
-                      onChange={e => handleChange('colors', { ...content.colors, quoteBg: e.target.value })}
-                    />
-                    <p className="text-[8px] text-stone-300 uppercase tracking-widest">Цвет «зелёного» квадрата за историей</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ColorsTab
+            content={content}
+            onChange={handleChange}
+          />
         ) : activeTab === 'rsvps' ? (
-          <div className="space-y-6 pb-20">
-            <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2 flex justify-between items-center font-sans">
-              Списокъ гостей
-              <span className="text-stone-400 font-normal">{rsvps.length} подтвержденiй</span>
-            </h3>
-            
-            {isLoadingRsvps ? (
-              <div className="flex items-center justify-center py-20 text-stone-300 italic">Загрузка списка...</div>
-            ) : rsvps.length === 0 ? (
-              <div className="text-center py-20">
-                <Users className="mx-auto text-stone-100 mb-4" size={48} />
-                <p className="text-stone-300 italic">Гостей пока нѣтъ</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {rsvps.map((rsvp: any) => (
-                  <div key={rsvp.id} className="p-4 bg-stone-50 rounded-lg border border-stone-100 group hover:border-imperial-gold/30 transition-all text-stone-700">
-                    <div className="flex items-start gap-4">
-                      {rsvp.avatarUrl && (
-                        <img src={rsvp.avatarUrl} className="w-12 h-12 rounded-full border border-stone-200" referrerPolicy="no-referrer" alt="Avatar" />
-                      )}
-                      <div className="flex-grow">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-display italic text-lg leading-tight">{rsvp.name}</h4>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[9px] uppercase tracking-tighter px-2 py-0.5 rounded ${rsvp.attending === 'yes' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                              {rsvp.attending === 'yes' ? 'Будетъ' : 'Отклонилъ'}
-                            </span>
-                            <button 
-                              onClick={() => handleDeleteRsvp(rsvp.id, rsvp.name)}
-                              className="p-1 px-1.5 text-stone-300 hover:text-red-600 hover:bg-stone-100 rounded transition-colors cursor-pointer"
-                              title="Удалить гостя"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-[10px] text-stone-400 mt-1">{rsvp.yandexEmail}</p>
-                        {rsvp.message && (
-                          <div className="mt-3 p-3 bg-white border border-stone-100 rounded text-xs text-stone-600 italic">
-                            «{rsvp.message}»
-                          </div>
-                        )}
-                        <p className="text-[8px] text-stone-300 mt-3 uppercase tracking-widest">
-                          {new Date(rsvp.timestamp).toLocaleString('ru-RU')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <RsvpsTab
+            rsvps={rsvps}
+            isLoadingRsvps={isLoadingRsvps}
+            onDeleteRsvp={handleDeleteRsvp}
+          />
         ) : activeTab === 'access' ? (
-          <div className="space-y-8 pb-20">
-            {/* Session Section */}
-            <div>
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2 mb-4 font-sans">
-                Текущій сеансъ
-              </h3>
-              <div className="bg-stone-50 border border-stone-100 rounded-lg p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-600">
-                    <Key size={14} />
-                  </div>
-                  <div>
-                    <h4 className="font-display italic text-base leading-none">denis (Администратор)</h4>
-                    <p className="text-[8px] uppercase tracking-widest text-[#22c55e] font-semibold mt-1">Доступ разрешён</p>
-                  </div>
-                </div>
-                
-                <button 
-                  onClick={onAdminLogout}
-                  className="w-full bg-stone-900 hover:bg-stone-800 text-white text-[9px] font-bold uppercase tracking-widest py-3 flex items-center justify-center gap-2 rounded transition-colors cursor-pointer"
-                >
-                  <LogOut size={12} />
-                  Выйти из системы
-                </button>
-              </div>
-            </div>
-
-            {/* Yandex Link Section */}
-            <div>
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2 mb-4 font-sans">
-                Интеграція съ Яндекс ID
-              </h3>
-              
-              {yandexUser ? (
-                <div className="bg-stone-50 border border-stone-100 rounded-lg p-5 space-y-4">
-                  <div className="flex items-center gap-4">
-                    <img 
-                      src={`https://avatars.yandex.net/get-yapic/${yandexUser.default_avatar_id}/islands-middle`}
-                      className="w-12 h-12 rounded-full border border-stone-200"
-                      alt="Yandex Avatar"
-                    />
-                    <div>
-                      <h4 className="font-display italic text-base leading-none">{yandexUser.real_name || yandexUser.display_name}</h4>
-                      <p className="text-[9px] text-stone-400 mt-1">Логин: {yandexUser.login}</p>
-                    </div>
-                  </div>
-
-                  {linkedYandexList.some(u => String(u.yandexId) === String(yandexUser.id)) ? (
-                    <div className="flex items-center gap-2 text-[#22c55e] text-xs font-semibold py-2 px-3 bg-green-50 rounded border border-green-100">
-                      <Check size={14} />
-                      <span>Этот аккаунт привязан к вашей админке</span>
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={handleLinkYandex}
-                      className="w-full bg-[#f33] hover:bg-[#d00] text-white text-[9px] font-bold uppercase tracking-widest py-3 flex items-center justify-center gap-2 rounded transition-colors cursor-pointer"
-                    >
-                      <Link2 size={12} />
-                      Привязать этот Яндекс ID
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-stone-50 border border-stone-100 rounded-lg p-5 text-center space-y-3">
-                  <p className="text-xs text-stone-400 font-light leading-relaxed">
-                    Вы можете войти под своим аккаунтом Яндекс, чтобы привязать его к панели управления. После этого вы сможете логиниться в один клик.
-                  </p>
-                  <button 
-                    onClick={onYandexLogin}
-                    className="w-full border border-stone-200 hover:bg-stone-100 text-stone-700 text-[9px] font-bold uppercase tracking-widest py-3 flex items-center justify-center gap-2 rounded transition-colors cursor-pointer"
-                  >
-                    Войти в Яндекс
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Linked Users List */}
-            <div>
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2 mb-4 font-sans flex justify-between items-center">
-                Доверенные профили
-                <span className="text-stone-400 font-normal">{linkedYandexList.length} привязано</span>
-              </h3>
-
-              {isLoadingLinks ? (
-                <div className="text-center py-6 text-stone-300 italic text-xs">Загрузка данных...</div>
-              ) : linkedYandexList.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-stone-200 rounded text-xs text-stone-300 italic">
-                  Нет привязанных профилей. Привяжите профиль Яндекс выше, чтобы заходить без ввода логина и пароля.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {linkedYandexList.map((usr: any) => (
-                    <div key={usr.yandexId} className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg border border-stone-100 hover:border-imperial-gold/20 transition-colors">
-                      {usr.avatarUrl && (
-                        <img 
-                          src={usr.avatarUrl} 
-                          className="w-10 h-10 rounded-full border border-stone-200" 
-                          alt="Avatar" 
-                          referrerPolicy="no-referrer"
-                        />
-                      )}
-                      <div className="flex-grow min-w-0">
-                        <h4 className="font-display italic text-sm text-stone-700 truncate leading-none mb-1">{usr.realName || usr.login}</h4>
-                        <p className="text-[8px] text-stone-400 uppercase tracking-widest">Логин: {usr.login}</p>
-                      </div>
-                      <button 
-                        onClick={() => handleUnlinkYandex(usr.yandexId)}
-                        className="p-2 hover:bg-red-50 hover:text-red-600 rounded text-stone-400 transition-all flex-shrink-0 cursor-pointer"
-                        title="Удалить привязку"
-                      >
-                        <Unlink size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <AccessTab
+            yandexUser={yandexUser}
+            linkedYandexList={linkedYandexList}
+            isLoadingLinks={isLoadingLinks}
+            onAdminLogout={onAdminLogout}
+            onYandexLogin={onYandexLogin}
+            onLinkYandex={handleLinkYandex}
+            onUnlinkYandex={handleUnlinkYandex}
+          />
         ) : activeTab === 'yandex_config' ? (
-          <div className="space-y-8 pb-20">
-            <div className="bg-imperial-gold/5 p-4 rounded-lg border border-imperial-gold/10">
-              <p className="text-[10px] text-imperial-gold font-bold uppercase tracking-widest font-sans">Параметры Yandex OAuth</p>
-              <p className="text-[10px] text-stone-500 mt-1 leading-relaxed font-sans">
-                Настройте Client ID и Client Secret своего приложения Yandex OAuth. После этого вход и привязка по клику заработают автоматически на любом устройстве.
-              </p>
-            </div>
-
-            <section className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-stone-400 uppercase font-bold font-sans">Yandex Client ID</label>
-                  <input 
-                    type="text" 
-                    placeholder="Например, 4e74..."
-                    className="w-full border-b border-stone-200 py-1.5 focus:border-imperial-gold outline-none text-sm bg-transparent font-mono text-stone-750"
-                    value={yandexClientId}
-                    onChange={e => setYandexClientId(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] text-stone-400 uppercase font-bold font-sans">Yandex Client Secret</label>
-                  <input 
-                    type="password" 
-                    placeholder="••••••••••••••••••••••••••••••••"
-                    className="w-full border-b border-stone-200 py-1.5 focus:border-imperial-gold outline-none text-sm bg-transparent font-mono text-stone-750"
-                    value={yandexClientSecret}
-                    onChange={e => setYandexClientSecret(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {yandexStatusMessage && (
-                <div className={`p-3 text-[11px] rounded font-semibold font-sans ${
-                  yandexStatusMessage.includes('успешно') || yandexStatusMessage.includes('благополучно')
-                  ? 'bg-green-50 text-green-700 border border-green-100' 
-                  : 'bg-red-50 text-red-700 border border-red-100'
-                }`}>
-                  {yandexStatusMessage}
-                </div>
-              )}
-
-              <button 
-                onClick={handleSaveYandexConfig}
-                disabled={isSavingYandex}
-                className={`w-full py-3 px-6 rounded-full text-[10px] uppercase tracking-widest font-sans font-bold text-center gap-2 transition-all flex items-center justify-center cursor-pointer ${
-                  isSavingYandex 
-                  ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                  : 'bg-stone-900 text-imperial-gold hover:bg-stone-800 shadow-md'
-                }`}
-              >
-                {isSavingYandex ? 'Сохранение...' : 'Сохранить ключи'}
-              </button>
-            </section>
-
-            <div className="border-t border-stone-100 pt-6 space-y-3 font-sans">
-              <h4 className="text-[10px] font-bold text-stone-600 uppercase tracking-widest">Инструкция по настройке</h4>
-              <ol className="text-[11px] text-stone-400 space-y-2 list-decimal list-inside leading-relaxed">
-                <li>Перейдите в <a href="https://oauth.yandex.ru" target="_blank" rel="noopener noreferrer" className="text-imperial-gold underline hover:text-imperial-gold/80 transition-colors">Яндекс ID OAuth</a> и создайте приложение.</li>
-                <li>Выберите пункт <b>«Веб-сервисы»</b> как тип платформы.</li>
-                <li>Укажите Redirect URI (поддерживает и localhost для тестов):<br/>
-                  <code className="bg-stone-50 text-stone-600 p-1.5 border border-stone-100 rounded text-[9px] font-mono mt-1 block select-all break-all">{window.location.origin}/auth/callback/yandex</code>
-                </li>
-                <li>Отметьте необходимые права доступа (Scopes) в блоке «Яндекс Паспорт»:
-                  <ul className="list-disc list-inside pl-4 mt-1 font-sans text-[10px] text-stone-400 space-y-1">
-                    <li>Доступ к адресу электронной почты (<b>email</b>)</li>
-                    <li>Доступ к имени, фамилии и полу (<b>info</b>)</li>
-                    <li>Доступ к логину, имени и аватару (<b>login</b>)</li>
-                  </ul>
-                </li>
-                <li>Скопируйте полученные <b>ID</b> и <b>Пароль (Secret)</b> и вставьте их на этой вкладке.</li>
-              </ol>
-            </div>
-          </div>
+          <YandexConfigTab
+            yandexClientId={yandexClientId}
+            setYandexClientId={setYandexClientId}
+            yandexClientSecret={yandexClientSecret}
+            setYandexClientSecret={setYandexClientSecret}
+            isSavingYandex={isSavingYandex}
+            yandexStatusMessage={yandexStatusMessage}
+            onSaveConfig={handleSaveYandexConfig}
+          />
+        ) : activeTab === 'media' ? (
+          <MediaTab
+            mediaFiles={mediaFiles}
+            isLoadingMedia={isLoadingMedia}
+            mediaError={mediaError}
+            onCopyUrl={handleCopyUrl}
+            onDeleteMedia={handleDeleteMedia}
+            isDeletingMediaName={isDeletingMediaName}
+            copiedUrl={copiedUrl}
+          />
         ) : null}
       </div>
 
       <div className="p-6 border-t border-stone-100 bg-stone-50 flex items-center justify-between gap-4">
         <button 
           onClick={onClose}
-          className="px-4 py-2 text-stone-400 text-[10px] uppercase tracking-widest hover:text-stone-600"
+          className="px-4 py-2 text-stone-400 text-[10px] uppercase tracking-widest hover:text-stone-600 cursor-pointer"
         >
           Отмена
         </button>
@@ -1698,7 +682,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           onClick={handleSave}
           className={`flex-grow flex items-center justify-center gap-2 px-6 py-3 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${
             hasChanges 
-            ? 'bg-stone-900 text-imperial-gold hover:bg-stone-800 shadow-lg' 
+            ? 'bg-stone-900 text-imperial-gold hover:bg-stone-800 shadow-lg cursor-pointer' 
             : 'bg-stone-200 text-stone-400 cursor-not-allowed'
           }`}
         >

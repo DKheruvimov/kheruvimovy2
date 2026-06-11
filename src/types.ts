@@ -61,6 +61,12 @@ export interface SiteContent {
   countdownEnabled?: boolean;
   countdownDate?: string;
   faviconUrl?: string;
+  ornamentsEnabled?: boolean;
+  customOrnamentUrl?: string;
+  recolorCustomOrnament?: boolean;
+  ornamentHeight?: number;
+  footerOrnamentHeight?: number;
+  scheduleOrnamentEnabled?: boolean;
   sections?: SectionConfig[];
   colors: {
     primary: string;
@@ -117,6 +123,12 @@ export const defaultContent: SiteContent = {
   countdownEnabled: true,
   countdownDate: "2026-08-25T17:00",
   faviconUrl: "/favicon.svg",
+  ornamentsEnabled: true,
+  customOrnamentUrl: "",
+  recolorCustomOrnament: true,
+  ornamentHeight: 20,
+  footerOrnamentHeight: 20,
+  scheduleOrnamentEnabled: false,
   sections: [
     { id: 'story', title: 'Наша исторiя', visible: true },
     { id: 'schedule', title: 'Распорядокъ дня', visible: true },

@@ -68,7 +68,7 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               className="py-20 border border-imperial-gold/20 backdrop-blur-xl"
             >
-              <Ornament className="mx-auto mb-10" />
+              <Ornament displayContent={displayContent} className="mx-auto mb-10" />
               <h3 className="text-4xl font-display mb-6 italic">Ваш ответъ принятъ</h3>
               <p className="text-white/40 font-display text-xl px-8">Мы бесконечно польщены вашим ответом. До встречи на усадебном пиру.</p>
             </motion.div>

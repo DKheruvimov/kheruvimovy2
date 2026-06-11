@@ -27,9 +27,11 @@ export const ScheduleSection: React.FC<ScheduleSectionProps> = ({
         >
           <h2 className="text-stone-400 font-sans text-xs uppercase tracking-[0.6em] font-bold mb-8">Манифест дня</h2>
           <h3 className="text-5xl md:text-7xl font-display text-estate-green italic font-light">Праздничный вечер</h3>
-          <div className="mt-8">
-            <Ornament className="mx-auto" />
-          </div>
+          {displayContent.scheduleOrnamentEnabled && (
+            <div className="mt-8">
+              <Ornament displayContent={displayContent} className="mx-auto" />
+            </div>
+          )}
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-12">
