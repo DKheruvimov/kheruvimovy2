@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from "motion/react";
-import { SiteContent, ScheduleItem, DetailItem } from '../types';
+import { SiteContent, ScheduleItem, DetailItem, defaultImageStyle } from '../types';
 import { 
   Save, Plus, Trash2, X, Image as ImageIcon, Users, Layout, Palette, 
   Shield, Link2, Unlink, LogOut, Key, Check, Settings, Maximize2, Minimize2,
-  AlignLeft, AlignRight
+  AlignLeft, AlignRight, Smartphone
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -16,6 +16,8 @@ interface AdminPanelProps {
   yandexUser: any;
   onYandexLogin: () => void;
   onAdminLogout: () => void;
+  isMobilePreview: boolean;
+  onMobilePreviewToggle: () => void;
 }
 
 const ImageStyleControls = ({ 
@@ -110,7 +112,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   hasChanges,
   yandexUser,
   onYandexLogin,
-  onAdminLogout
+  onAdminLogout,
+  isMobilePreview,
+  onMobilePreviewToggle
 }) => {
   const [activeTab, setActiveTab] = useState<'content' | 'colors' | 'rsvps' | 'access' | 'yandex_config'>('content');
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -307,7 +311,60 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // State for image uploads loading indicator
   const [uploadingState, setUploadingState] = useState<Record<string, boolean>>({});
 
-  const handleImageUploadForField = async (e: React.ChangeEvent<HTMLInputElement>, field: 'heroImage' | 'storyImage' | 'detailsImage') => {
+  const compressImage = (file: File, maxWidth = 1920, maxHeight = 1920, quality = 0.85): Promise<{ blob: Blob; type: string }> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve({ blob: file, type: file.type });
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve({ blob, type: 'image/jpeg' });
+              } else {
+                resolve({ blob: file, type: file.type });
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => reject(new Error('Image load error'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('File read error'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUploadForField = async (
+    e: React.ChangeEvent<HTMLInputElement>, 
+    field: 'heroImage' | 'storyImage' | 'detailsImage' | 'heroImageMobile' | 'storyImageMobile' | 'detailsImageMobile'
+  ) => {
     const file = e.target.files?.[0];
     if (!file || !adminToken) return;
 
@@ -315,13 +372,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setUploadingState(prev => ({ ...prev, [field]: true }));
 
     try {
+      // Compress and resize image to prevent Nginx 413 (Payload Too Large) on VM
+      let uploadBlob: Blob = file;
+      let uploadType: string = file.type;
+
+      if (file.type.startsWith('image/')) {
+        try {
+          const compressed = await compressImage(file);
+          uploadBlob = compressed.blob;
+          uploadType = compressed.type;
+        } catch (compressErr) {
+          console.error("Failed to compress image, using original", compressErr);
+        }
+      }
+
       // Read file as raw ArrayBuffer
-      const buffer = await file.arrayBuffer();
+      const buffer = await uploadBlob.arrayBuffer();
 
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: {
-          'Content-Type': file.type,
+          'Content-Type': uploadType,
           'Authorization': `Bearer ${adminToken}`
         },
         body: buffer
@@ -467,6 +538,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button 
+            onClick={onMobilePreviewToggle}
+            className={`p-2 rounded-full transition-colors flex-shrink-0 ${isMobilePreview ? 'bg-imperial-gold/15 text-imperial-gold border border-imperial-gold/20' : 'hover:bg-stone-100 text-stone-400'}`}
+            title={isMobilePreview ? "Показать десктопную версию" : "Включить мобильный предпросмотр"}
+          >
+            <Smartphone size={18} />
+          </button>
+          <button 
             onClick={() => {
               const nextSide = dockSide === 'right' ? 'left' : 'right';
               setDockSide(nextSide);
@@ -538,120 +616,202 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
              {/* Media */}
             <section className="space-y-6">
               <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Изображения</h3>
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <div className="flex gap-3 items-center">
-                    <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
-                      <img src={content.heroImage} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-grow">
-                      {uploadingState['heroImage'] ? (
-                        <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
-                      ) : (
-                        <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
-                          <span>Главное фото (URL)</span>
-                          <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
-                            <Plus size={10} />
-                            Загрузить локально
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
-                              onChange={e => handleImageUploadForField(e, 'heroImage')}
-                            />
-                          </span>
-                        </label>
-                      )}
-                      <input 
-                        type="text" 
-                        className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
-                        value={content.heroImage}
-                        onChange={e => handleChange('heroImage', e.target.value)}
-                      />
-                    </div>
+              
+              {/* Quick toggle banner for the modes */}
+              <div className="flex items-center justify-between p-3.5 bg-stone-50 rounded-xl border border-stone-200 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className={`p-2 rounded-lg ${isMobilePreview ? 'bg-imperial-gold/15 text-imperial-gold border border-imperial-gold/20' : 'bg-stone-100 text-stone-500'}`}>
+                    <Smartphone size={16} />
+                  </span>
+                  <div>
+                    <h4 className="text-[9px] uppercase tracking-wider font-bold text-stone-400">
+                      Редактируемый режимъ:
+                    </h4>
+                    <span className="text-xs font-semibold text-stone-800">
+                      {isMobilePreview ? "Мобильная версія 📱" : "Компьютерная версія 💻"}
+                    </span>
                   </div>
-                  <ImageStyleControls 
-                    label="Стиль: Главное фото" 
-                    style={content.heroStyle} 
-                    onChange={s => handleChange('heroStyle', s)} 
-                  />
                 </div>
+                <button
+                  type="button"
+                  onClick={onMobilePreviewToggle}
+                  className="px-3 py-1.5 bg-white border border-stone-200 hover:border-imperial-gold hover:text-imperial-gold text-stone-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  {isMobilePreview ? "На десктопъ" : "На мобильн."}
+                </button>
+              </div>
 
-                <div className="space-y-3">
-                  <div className="flex gap-3 items-center">
-                    <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
-                      <img src={content.storyImage} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-grow">
-                      {uploadingState['storyImage'] ? (
-                        <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка...</div>
-                      ) : (
-                        <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
-                          <span>Фото истории (URL)</span>
-                          <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
-                            <Plus size={10} />
-                            Загрузить локально
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
-                              onChange={e => handleImageUploadForField(e, 'storyImage')}
-                            />
-                          </span>
-                        </label>
-                      )}
-                      <input 
-                        type="text" 
-                        className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
-                        value={content.storyImage}
-                        onChange={e => handleChange('storyImage', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <ImageStyleControls 
-                    label="Стиль: Фото истории" 
-                    style={content.storyStyle} 
-                    onChange={s => handleChange('storyStyle', s)} 
-                  />
-                </div>
+              <div className="space-y-8">
+                {(() => {
+                  const heroField: keyof SiteContent = isMobilePreview ? 'heroImageMobile' : 'heroImage';
+                  const heroStyleField: keyof SiteContent = isMobilePreview ? 'heroStyleMobile' : 'heroStyle';
+                  const currentHeroImage = content[heroField] as string || "";
+                  const currentHeroStyle = content[heroStyleField] || defaultImageStyle;
+                  const displayHeroSrc = currentHeroImage || content.heroImage;
 
-                <div className="space-y-3">
-                  <div className="flex gap-3 items-center">
-                    <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
-                      <img src={content.detailsImage} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-grow">
-                      {uploadingState['detailsImage'] ? (
-                        <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка...</div>
-                      ) : (
-                        <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
-                          <span>Фото деталей (URL)</span>
-                          <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
-                            <Plus size={10} />
-                            Загрузить локально
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
-                              onChange={e => handleImageUploadForField(e, 'detailsImage')}
-                            />
+                  const storyField: keyof SiteContent = isMobilePreview ? 'storyImageMobile' : 'storyImage';
+                  const storyStyleField: keyof SiteContent = isMobilePreview ? 'storyStyleMobile' : 'storyStyle';
+                  const currentStoryImage = content[storyField] as string || "";
+                  const currentStoryStyle = content[storyStyleField] || defaultImageStyle;
+                  const displayStorySrc = currentStoryImage || content.storyImage;
+
+                  const detailsField: keyof SiteContent = isMobilePreview ? 'detailsImageMobile' : 'detailsImage';
+                  const detailsStyleField: keyof SiteContent = isMobilePreview ? 'detailsStyleMobile' : 'detailsStyle';
+                  const currentDetailsImage = content[detailsField] as string || "";
+                  const currentDetailsStyle = content[detailsStyleField] || defaultImageStyle;
+                  const displayDetailsSrc = currentDetailsImage || content.detailsImage;
+
+                  return (
+                    <>
+                      {/* 1. HERO IMAGE */}
+                      <div className="p-4 bg-stone-50 rounded-xl space-y-4 border border-stone-200/60">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-xs font-semibold text-stone-700 font-display italic">1. Главный экран (Hero)</h4>
+                          <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
+                            {isMobilePreview ? "Мобильное фото" : "Десктопное фото"}
                           </span>
-                        </label>
-                      )}
-                      <input 
-                        type="text" 
-                        className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
-                        value={content.detailsImage}
-                        onChange={e => handleChange('detailsImage', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <ImageStyleControls 
-                    label="Стиль: Фото деталей" 
-                    style={content.detailsStyle} 
-                    onChange={s => handleChange('detailsStyle', s)} 
-                  />
-                </div>
+                        </div>
+                        
+                        <div className="space-y-3 p-3 bg-white rounded-lg border border-stone-150 shadow-sm">
+                          <div className="flex gap-3 items-center">
+                            <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
+                              <img src={displayHeroSrc} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-grow">
+                              {uploadingState[heroField] ? (
+                                <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
+                              ) : (
+                                <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
+                                  <span>Фото (URL)</span>
+                                  <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
+                                    <Plus size={10} />
+                                    Загрузить
+                                    <input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      className="hidden" 
+                                      onChange={e => handleImageUploadForField(e, heroField)}
+                                    />
+                                  </span>
+                                </label>
+                              )}
+                              <input 
+                                type="text" 
+                                className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
+                                placeholder={isMobilePreview ? "Использовать десктопную если пусто" : "Ссылка на десктопное изображение"}
+                                value={currentHeroImage}
+                                onChange={e => handleChange(heroField, e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <ImageStyleControls 
+                            label={`Настройка отображения (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
+                            style={currentHeroStyle} 
+                            onChange={s => handleChange(heroStyleField, s)} 
+                          />
+                        </div>
+                      </div>
+
+                      {/* 2. STORY IMAGE */}
+                      <div className="p-4 bg-stone-50 rounded-xl space-y-4 border border-stone-200/60">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-xs font-semibold text-stone-700 font-display italic">2. О нашем союзе (История)</h4>
+                          <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
+                            {isMobilePreview ? "Мобильное фото" : "Десктопное фото"}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-3 p-3 bg-white rounded-lg border border-stone-150 shadow-sm">
+                          <div className="flex gap-3 items-center">
+                            <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
+                              <img src={displayStorySrc} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-grow">
+                              {uploadingState[storyField] ? (
+                                <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
+                              ) : (
+                                <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
+                                  <span>Фото (URL)</span>
+                                  <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
+                                    <Plus size={10} />
+                                    Загрузить
+                                    <input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      className="hidden" 
+                                      onChange={e => handleImageUploadForField(e, storyField)}
+                                    />
+                                  </span>
+                                </label>
+                              )}
+                              <input 
+                                type="text" 
+                                className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
+                                placeholder={isMobilePreview ? "Использовать десктопную если пусто" : "Ссылка на десктопное изображение"}
+                                value={currentStoryImage}
+                                onChange={e => handleChange(storyField, e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <ImageStyleControls 
+                            label={`Настройка отображения (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
+                            style={currentStoryStyle} 
+                            onChange={s => handleChange(storyStyleField, s)} 
+                          />
+                        </div>
+                      </div>
+
+                      {/* 3. DETAILS IMAGE */}
+                      <div className="p-4 bg-stone-50 rounded-xl space-y-4 border border-stone-200/60">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-xs font-semibold text-stone-700 font-display italic">3. Детали торжества (Инфо)</h4>
+                          <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
+                            {isMobilePreview ? "Мобильное фото" : "Десктопное фото"}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-3 p-3 bg-white rounded-lg border border-stone-150 shadow-sm">
+                          <div className="flex gap-3 items-center">
+                            <div className="w-12 h-12 bg-stone-100 rounded overflow-hidden flex-shrink-0 border border-stone-200">
+                              <img src={displayDetailsSrc} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-grow">
+                              {uploadingState[detailsField] ? (
+                                <div className="text-[9px] text-stone-400 uppercase font-bold animate-pulse">Загрузка изображения...</div>
+                              ) : (
+                                <label className="text-[9px] text-stone-400 uppercase font-bold flex items-center justify-between w-full">
+                                  <span>Фото (URL)</span>
+                                  <span className="flex items-center gap-1 cursor-pointer text-imperial-gold hover:text-stone-900 transition-colors uppercase text-[9px] font-bold">
+                                    <Plus size={10} />
+                                    Загрузить
+                                    <input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      className="hidden" 
+                                      onChange={e => handleImageUploadForField(e, detailsField)}
+                                    />
+                                  </span>
+                                </label>
+                              )}
+                              <input 
+                                type="text" 
+                                className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
+                                placeholder={isMobilePreview ? "Использовать десктопную если пусто" : "Ссылка на десктопное изображение"}
+                                value={currentDetailsImage}
+                                onChange={e => handleChange(detailsField, e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <ImageStyleControls 
+                            label={`Настройка отображения (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
+                            style={currentDetailsStyle} 
+                            onChange={s => handleChange(detailsStyleField, s)} 
+                          />
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </section>
 

@@ -25,17 +25,23 @@ export interface SiteContent {
   subLocation: string;
   heroImage: string;
   heroStyle: ImageStyle;
+  heroImageMobile?: string;
+  heroStyleMobile?: ImageStyle;
   storyTitle: string;
   storySubtitle: string;
   storyDescription: string;
   storyImage: string;
   storyStyle: ImageStyle;
+  storyImageMobile?: string;
+  storyStyleMobile?: ImageStyle;
   storyQuote: string;
   signature: string;
   schedule: ScheduleItem[];
   details: DetailItem[];
   detailsImage: string;
   detailsStyle: ImageStyle;
+  detailsImageMobile?: string;
+  detailsStyleMobile?: ImageStyle;
   rsvpDeadline: string;
   footerText: string;
   manorTitle: string;
@@ -49,7 +55,7 @@ export interface SiteContent {
   };
 }
 
-const defaultImageStyle: ImageStyle = {
+export const defaultImageStyle: ImageStyle = {
   scale: 1,
   rotate: 0,
   x: 0,
@@ -63,11 +69,15 @@ export const defaultContent: SiteContent = {
   subLocation: "Усадьба времёнъ Имперiи",
   heroImage: "/images/hero.jpg",
   heroStyle: { ...defaultImageStyle, scale: 1.1 },
+  heroImageMobile: "",
+  heroStyleMobile: defaultImageStyle,
   storyTitle: "О нашем союзе",
   storySubtitle: "Тихое торжество въ сердце города...",
   storyDescription: "В этот особенный день, после нашей тихой частной росписи, мы будем бесконечно рады разделить праздничный ужин с самыми дорогими сердцу людьми. В исторической атмосфере старого Нижнего, среди родных и близких, мы отметим начало нашей семейной жизни.",
   storyImage: "/images/story.jpg",
   storyStyle: defaultImageStyle,
+  storyImageMobile: "",
+  storyStyleMobile: defaultImageStyle,
   storyQuote: "«Любовь — это когда две души находят друг друга сквозь века...»",
   signature: "Денис и Дарья Херувимовы",
   schedule: [
@@ -82,6 +92,8 @@ export const defaultContent: SiteContent = {
   ],
   detailsImage: "/images/details.jpg",
   detailsStyle: defaultImageStyle,
+  detailsImageMobile: "",
+  detailsStyleMobile: defaultImageStyle,
   rsvpDeadline: "15 мая 2026",
   footerText: "Въ ожиданіи тепла и встрѣчи.",
   manorTitle: "Усадьба времёнъ Имперiи",

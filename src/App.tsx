@@ -12,7 +12,7 @@ import {
   Settings
 } from "lucide-react";
 import React, { useRef, useState, useEffect } from "react";
-import { SiteContent, defaultContent } from "./types";
+import { SiteContent, defaultContent, defaultImageStyle } from "./types";
 import { AdminPanel } from "./components/AdminPanel";
 import { AdminLoginModal } from "./components/AdminLoginModal";
 
@@ -141,18 +141,33 @@ const Preloader = () => (
 );
 
 export default function App() {
+  const isInsideIframe = typeof window !== 'undefined' && window.location.search.includes('iframe=true');
+
   const [content, setContent] = useState<SiteContent>(defaultContent);
   const [previewContent, setPreviewContent] = useState<SiteContent>(defaultContent);
+  const [isMobilePreview, setIsMobilePreview] = useState(false);
+  const [isWindowMobile, setIsWindowMobile] = useState(false);
 
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isInsideIframe);
   const [isContentLoading, setIsContentLoading] = useState(true);
   const [yandexUser, setYandexUser] = useState<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsWindowMobile(window.innerWidth <= 768);
+    };
+    if (typeof window !== 'undefined') {
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
+  }, []);
 
   const [formState, setFormState] = useState({
     name: "",
@@ -236,8 +251,11 @@ export default function App() {
               schedule: Array.isArray(data.schedule) ? data.schedule : defaultContent.schedule,
               details: Array.isArray(data.details) ? data.details : defaultContent.details,
               heroStyle: { ...defaultContent.heroStyle, ...(data.heroStyle || {}) },
+              heroStyleMobile: { ...(defaultContent.heroStyleMobile || defaultImageStyle), ...(data.heroStyleMobile || {}) },
               storyStyle: { ...defaultContent.storyStyle, ...(data.storyStyle || {}) },
-              detailsStyle: { ...defaultContent.detailsStyle, ...(data.detailsStyle || {}) }
+              storyStyleMobile: { ...(defaultContent.storyStyleMobile || defaultImageStyle), ...(data.storyStyleMobile || {}) },
+              detailsStyle: { ...defaultContent.detailsStyle, ...(data.detailsStyle || {}) },
+              detailsStyleMobile: { ...(defaultContent.detailsStyleMobile || defaultImageStyle), ...(data.detailsStyleMobile || {}) }
             };
             setContent(merged);
             setPreviewContent(merged);
@@ -256,8 +274,11 @@ export default function App() {
               schedule: Array.isArray(data.schedule) ? data.schedule : defaultContent.schedule,
               details: Array.isArray(data.details) ? data.details : defaultContent.details,
               heroStyle: { ...defaultContent.heroStyle, ...(data.heroStyle || {}) },
+              heroStyleMobile: { ...(defaultContent.heroStyleMobile || defaultImageStyle), ...(data.heroStyleMobile || {}) },
               storyStyle: { ...defaultContent.storyStyle, ...(data.storyStyle || {}) },
-              detailsStyle: { ...defaultContent.detailsStyle, ...(data.detailsStyle || {}) }
+              storyStyleMobile: { ...(defaultContent.storyStyleMobile || defaultImageStyle), ...(data.storyStyleMobile || {}) },
+              detailsStyle: { ...defaultContent.detailsStyle, ...(data.detailsStyle || {}) },
+              detailsStyleMobile: { ...(defaultContent.detailsStyleMobile || defaultImageStyle), ...(data.detailsStyleMobile || {}) }
             };
             setContent(merged);
             setPreviewContent(merged);
@@ -341,11 +362,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (isInsideIframe) return;
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 4000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isInsideIframe]);
 
   const handleYandexLogin = async () => {
     setIsLoggingIn(true);
@@ -405,13 +427,62 @@ export default function App() {
 
   const handlePreviewUpdate = (newContent: SiteContent) => {
     setPreviewContent(newContent);
+    if (isInsideIframe && typeof window !== 'undefined' && window.parent && window.parent !== window) {
+      try {
+        (window.parent as any).__updatePreviewFromIframe?.(newContent);
+      } catch (e) {
+        console.warn("Parent update fail:", e);
+      }
+    }
   };
+
+  useEffect(() => {
+    if (isInsideIframe) {
+      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        try {
+          const parentContent = (window.parent as any).__wedding_preview_content;
+          if (parentContent) {
+            setContent(parentContent);
+            setPreviewContent(parentContent);
+          }
+        } catch (e) {
+          console.warn("Parent initial content read error:", e);
+        }
+
+        (window as any).__updatePreviewContent = (newContent: SiteContent) => {
+          setContent(newContent);
+          setPreviewContent(newContent);
+        };
+      }
+    } else {
+      if (typeof window !== 'undefined') {
+        (window as any).__updatePreviewFromIframe = (newContent: SiteContent) => {
+          setPreviewContent(newContent);
+        };
+      }
+    }
+  }, [isInsideIframe]);
+
+  useEffect(() => {
+    if (!isInsideIframe && typeof window !== 'undefined') {
+      (window as any).__wedding_preview_content = previewContent;
+      
+      const iframeEl = document.getElementById("mobile-preview-iframe") as HTMLIFrameElement | null;
+      if (iframeEl && iframeEl.contentWindow) {
+        try {
+          (iframeEl.contentWindow as any).__updatePreviewContent?.(previewContent);
+        } catch (e) {}
+      }
+    }
+  }, [previewContent, isInsideIframe]);
 
   const handleCancelChanges = () => {
     setPreviewContent(content);
     setIsAdminOpen(false);
   };
   
+  const isMobile = isMobilePreview || isWindowMobile;
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
@@ -419,6 +490,15 @@ export default function App() {
 
   const displayContent = isAdminOpen ? previewContent : content;
   const hasChanges = JSON.stringify(content) !== JSON.stringify(previewContent);
+
+  const activeHeroImage = (isMobile && displayContent.heroImageMobile) ? displayContent.heroImageMobile : displayContent.heroImage;
+  const activeHeroStyle = (isMobile && displayContent.heroStyleMobile) ? displayContent.heroStyleMobile : displayContent.heroStyle;
+
+  const activeStoryImage = (isMobile && displayContent.storyImageMobile) ? displayContent.storyImageMobile : displayContent.storyImage;
+  const activeStoryStyle = (isMobile && displayContent.storyStyleMobile) ? displayContent.storyStyleMobile : displayContent.storyStyle;
+
+  const activeDetailsImage = (isMobile && displayContent.detailsImageMobile) ? displayContent.detailsImageMobile : displayContent.detailsImage;
+  const activeDetailsStyle = (isMobile && displayContent.detailsStyleMobile) ? displayContent.detailsStyleMobile : displayContent.detailsStyle;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -463,64 +543,12 @@ export default function App() {
   const names = displayContent?.names || defaultContent.names;
   const nameParts = names.includes(' & ') ? names.split(' & ') : [names, ""];
 
-  return (
-    <div ref={containerRef} className="relative bg-warm-cream selection:bg-imperial-gold selection:text-white min-h-screen" style={{ color: displayContent?.colors?.text || defaultContent.colors.text }}>
-      <AnimatePresence>
-        {isLoading && <Preloader />}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isAdminOpen && (
-          <AdminPanel 
-            content={previewContent} 
-            onPreviewUpdate={handlePreviewUpdate}
-            onCommit={handleCommitContent} 
-            onClose={handleCancelChanges} 
-            hasChanges={hasChanges}
-            yandexUser={yandexUser}
-            onYandexLogin={handleYandexLogin}
-            onAdminLogout={handleAdminLogout}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isLoginModalOpen && (
-          <AdminLoginModal 
-            onClose={() => setIsLoginModalOpen(false)}
-            onLoginSuccess={(token) => {
-              localStorage.setItem('adminToken', token);
-              setIsAdminLoggedIn(true);
-              setIsLoginModalOpen(false);
-              setIsAdminOpen(true);
-            }}
-            onYandexLogin={handleYandexLogin}
-            isLoggingInYandex={isLoggingIn}
-          />
-        )}
-      </AnimatePresence>
-
-      {!isLoading && isAdminLoggedIn && !isAdminOpen && !isLoginModalOpen && (
-        <button 
-          onClick={() => {
-            const token = localStorage.getItem('adminToken');
-            if (token) {
-              setIsAdminOpen(true);
-            } else {
-              setIsLoginModalOpen(true);
-            }
-          }}
-          className="fixed bottom-6 right-6 z-[150] w-12 h-12 bg-stone-900 text-imperial-gold rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform cursor-pointer"
-        >
-          <Settings size={20} />
-        </button>
-      )}
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isLoading ? 0 : 1 }}
-        transition={{ duration: 2 }}
-      >
+  const pageContent = (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isLoading ? 0 : 1 }}
+      transition={{ duration: 2 }}
+    >
         {/* 1. Hero Section */}
         <section className="relative h-screen flex items-center justify-center overflow-hidden">
           <motion.div 
@@ -528,12 +556,12 @@ export default function App() {
             className="absolute inset-0 z-0"
           >
             <img 
-              src={displayContent.heroImage} 
+              src={activeHeroImage} 
               alt="Historical Russian Manor" 
               className="w-full h-full object-cover brightness-[0.75] sepia-[0.1]"
               referrerPolicy="no-referrer"
               style={{
-                transform: `translate(${displayContent.heroStyle.x}px, ${displayContent.heroStyle.y}px) rotate(${displayContent.heroStyle.rotate}deg) scale(${displayContent.heroStyle.scale})`
+                transform: `translate(${activeHeroStyle.x}px, ${activeHeroStyle.y}px) rotate(${activeHeroStyle.rotate}deg) scale(${activeHeroStyle.scale})`
               }}
             />
             <div className="absolute inset-0 bg-stone-950/20" />
@@ -612,12 +640,12 @@ export default function App() {
               <div className="absolute inset-0 border border-imperial-gold/5 m-4" />
               <div className="relative overflow-hidden aspect-[4/5]">
                 <img 
-                  src={displayContent.storyImage} 
+                  src={activeStoryImage} 
                   alt="The Couple" 
                   className="w-full h-full object-cover grayscale-[0.1] contrast-[1.05]"
                   referrerPolicy="no-referrer"
                   style={{
-                    transform: `translate(${displayContent.storyStyle.x}px, ${displayContent.storyStyle.y}px) rotate(${displayContent.storyStyle.rotate}deg) scale(${displayContent.storyStyle.scale})`
+                    transform: `translate(${activeStoryStyle.x}px, ${activeStoryStyle.y}px) rotate(${activeStoryStyle.rotate}deg) scale(${activeStoryStyle.scale})`
                   }}
                 />
               </div>
@@ -808,12 +836,12 @@ export default function App() {
               className="order-1 md:order-2 imperial-frame overflow-hidden"
             >
               <img 
-                src={displayContent.detailsImage} 
+                src={activeDetailsImage} 
                 alt="Manor Aesthetics" 
                 className="w-full aspect-[4/5] object-cover contrast-[1.1] grayscale-[0.05]"
                 referrerPolicy="no-referrer"
                 style={{
-                  transform: `translate(${displayContent.detailsStyle.x}px, ${displayContent.detailsStyle.y}px) rotate(${displayContent.detailsStyle.rotate}deg) scale(${displayContent.detailsStyle.scale})`
+                  transform: `translate(${activeDetailsStyle.x}px, ${activeDetailsStyle.y}px) rotate(${activeDetailsStyle.rotate}deg) scale(${activeDetailsStyle.scale})`
                 }}
               />
             </motion.div>
@@ -962,6 +990,101 @@ export default function App() {
           </div>
         </footer>
       </motion.div>
-    </div>
-  );
-}
+    );
+
+    if (isInsideIframe) {
+      return (
+        <div ref={containerRef} className="relative bg-warm-cream selection:bg-imperial-gold selection:text-white min-h-screen" style={{ color: displayContent?.colors?.text || defaultContent.colors.text }}>
+          {pageContent}
+        </div>
+      );
+    }
+
+    return (
+      <div ref={containerRef} className="relative bg-warm-cream selection:bg-imperial-gold selection:text-white min-h-screen" style={{ color: displayContent?.colors?.text || defaultContent.colors.text }}>
+        <AnimatePresence>
+          {isLoading && <Preloader />}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isAdminOpen && (
+            <AdminPanel 
+              content={previewContent} 
+              onPreviewUpdate={handlePreviewUpdate}
+              onCommit={handleCommitContent} 
+              onClose={handleCancelChanges} 
+              hasChanges={hasChanges}
+              yandexUser={yandexUser}
+              onYandexLogin={handleYandexLogin}
+              onAdminLogout={handleAdminLogout}
+              isMobilePreview={isMobilePreview}
+              onMobilePreviewToggle={() => setIsMobilePreview(!isMobilePreview)}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isLoginModalOpen && (
+            <AdminLoginModal 
+              onClose={() => setIsLoginModalOpen(false)}
+              onLoginSuccess={(token) => {
+                localStorage.setItem('adminToken', token);
+                setIsAdminLoggedIn(true);
+                setIsLoginModalOpen(false);
+                setIsAdminOpen(true);
+              }}
+              onYandexLogin={handleYandexLogin}
+              isLoggingInYandex={isLoggingIn}
+            />
+          )}
+        </AnimatePresence>
+
+        {!isLoading && isAdminLoggedIn && !isAdminOpen && !isLoginModalOpen && (
+          <button 
+            onClick={() => {
+              const token = localStorage.getItem('adminToken');
+              if (token) {
+                setIsAdminOpen(true);
+              } else {
+                setIsLoginModalOpen(true);
+              }
+            }}
+            className="fixed bottom-6 right-6 z-[150] w-12 h-12 bg-stone-900 text-imperial-gold rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform cursor-pointer"
+          >
+            <Settings size={20} />
+          </button>
+        )}
+
+        {isMobilePreview && !isWindowMobile ? (
+          <div className="fixed inset-0 flex items-center justify-center bg-stone-950/90 py-12 z-[90] overflow-y-auto">
+            {/* Smartphone Mock Frame */}
+            <div className="w-[390px] h-[844px] bg-warm-cream rounded-[56px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] border-[14px] border-stone-850 relative flex flex-col flex-shrink-0 animate-fade-in ring-1 ring-stone-700">
+              {/* Top Notch Status */}
+              <div className="absolute top-2.5 inset-x-0 h-6 z-[99] flex justify-center items-center pointer-events-none">
+                <div className="w-32 h-5.5 bg-stone-900 rounded-full flex items-center justify-between px-3 text-[9px] text-stone-400 font-mono">
+                  <span className="font-semibold text-white">09:41</span>
+                  <div className="w-2.5 h-2.5 rounded-full bg-stone-950 border border-stone-800 flex-shrink-0" />
+                  <div className="flex gap-1 items-center">
+                    <span className="tracking-tighter">5G</span>
+                    <div className="w-3.5 h-2 rounded-[2px] border border-stone-400 flex items-center p-[0.5px]">
+                      <div className="bg-stone-400 h-full w-[80%] rounded-[1px]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Native Mobile Preview via Iframe to trigger media query break points perfectly */}
+              <iframe
+                id="mobile-preview-iframe"
+                src={typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}${window.location.pathname}?iframe=true` : "/?iframe=true"}
+                className="flex-grow w-full bg-warm-cream border-0 rounded-[42px] h-full overflow-y-auto"
+                title="Mobile Preview Frame"
+              />
+            </div>
+          </div>
+        ) : (
+          pageContent
+        )}
+      </div>
+    );
+  }
