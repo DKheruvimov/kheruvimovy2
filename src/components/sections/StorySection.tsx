@@ -76,7 +76,13 @@ export const StorySection: React.FC<StorySectionProps> = ({
               canEdit={isAdminOpen}
             />
           </h2>
-          <h3 className="text-5xl md:text-7xl font-display italic text-estate-green leading-[1.1] font-light">
+          <h3 className={`${
+            (displayContent.storySubtitle || "").length > 50
+              ? "text-3xl sm:text-4xl md:text-[2.75rem] lg:text-[3.25rem] leading-[1.25]"
+              : (displayContent.storySubtitle || "").length > 35
+                ? "text-4xl sm:text-5xl md:text-[3.5rem] lg:text-[4rem] leading-[1.2]"
+                : "text-5xl md:text-7xl leading-[1.1]"
+          } font-display italic text-estate-green font-light transition-all duration-300`}>
             <EditableText 
               value={displayContent.storySubtitle} 
               onChange={v => handlePreviewUpdate({ ...displayContent, storySubtitle: v })}

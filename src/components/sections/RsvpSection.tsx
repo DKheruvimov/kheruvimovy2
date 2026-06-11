@@ -81,8 +81,7 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
                     required
                     type="text" 
                     placeholder="Ваше Имя"
-                    className={`w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light placeholder:text-white/5 ${yandexUser ? 'text-white/40' : ''}`}
-                    readOnly={!!yandexUser}
+                    className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light placeholder:text-white/5 text-white"
                     value={formState.name}
                     onChange={e => setFormState({...formState, name: e.target.value})}
                   />

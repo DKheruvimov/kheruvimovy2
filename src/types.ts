@@ -97,7 +97,7 @@ export const defaultContent: SiteContent = {
   heroImageMobile: "",
   heroStyleMobile: defaultImageStyle,
   storyTitle: "О нашем союзе",
-  storySubtitle: "Тихое торжество въ сердце города...",
+  storySubtitle: "Чтобы все получилось, нужны воспоминания, самые счастливые...",
   storyDescription: "В этот особенный день, после нашей тихой частной росписи, мы будем бесконечно рады разделить праздничный ужин с самыми дорогими сердцу людьми. В исторической атмосфере старого Нижнего, среди родных и близких, мы отметим начало нашей семейной жизни.",
   storyImage: "/images/story.jpg",
   storyStyle: defaultImageStyle,
