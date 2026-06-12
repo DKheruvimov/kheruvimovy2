@@ -38,4 +38,103 @@ body {
     opacity: 0.3;
     pointer-events: none;
   }
+
+  /* --- Schedule Card / Праздничный вечер --- */
+  .schedule-card {
+    transition: border-color 700ms ease, background-color 700ms ease;
+  }
+  .schedule-card-icon-container {
+    transform: rotate(45deg);
+    border-color: rgba(181, 149, 90, 0.3); /* border-imperial-gold/30 */
+    transition: transform 1000ms cubic-bezier(0.25, 1, 0.5, 1), border-color 1000ms ease;
+  }
+  .schedule-card-icon {
+    transform: rotate(-45deg);
+    transition: transform 1000ms cubic-bezier(0.25, 1, 0.5, 1), color 1000ms ease;
+  }
+  .schedule-card-time {
+    transition: color 700ms ease;
+  }
+  .schedule-card-desc {
+    transition: opacity 700ms ease;
+  }
+
+  /* Desktop Hover Rules */
+  @media (hover: hover) {
+    .schedule-card:hover {
+      border-color: rgba(181, 149, 90, 0.1);
+    }
+    .schedule-card:hover .schedule-card-icon-container {
+      transform: rotate(0deg);
+      border-color: rgba(181, 149, 90, 0.6);
+    }
+    .schedule-card:hover .schedule-card-icon {
+      transform: rotate(0deg);
+      color: var(--color-imperial-gold);
+    }
+    .schedule-card:hover .schedule-card-time {
+      color: var(--color-imperial-gold);
+    }
+    .schedule-card:hover .schedule-card-desc {
+      opacity: 1;
+    }
+  }
+
+  /* Mobile/Scroll Active State */
+  .schedule-card.is-active {
+    border-color: rgba(181, 149, 90, 0.15);
+    background-color: rgba(181, 149, 90, 0.02);
+  }
+  .schedule-card.is-active .schedule-card-icon-container {
+    transform: rotate(0deg);
+    border-color: rgba(181, 149, 90, 0.60);
+    transition: transform 1500ms cubic-bezier(0.34, 1.56, 0.64, 1) 400ms, border-color 1500ms ease 400ms;
+  }
+  .schedule-card.is-active .schedule-card-icon {
+    transform: rotate(0deg);
+    color: var(--color-imperial-gold);
+    transition: transform 1500ms cubic-bezier(0.34, 1.56, 0.64, 1) 400ms, color 1500ms ease 400ms;
+  }
+  .schedule-card.is-active .schedule-card-time {
+    color: var(--color-imperial-gold);
+    transition: color 1000ms ease 400ms;
+  }
+  .schedule-card.is-active .schedule-card-desc {
+    opacity: 1;
+    transition: opacity 1000ms ease 400ms;
+  }
+
+
+  /* --- Detail Item / Усадебный устав --- */
+  .detail-item-icon-container {
+    border-color: #f5f5f4; /* border-stone-100 */
+    background-color: transparent;
+    transition: background-color 500ms ease, border-color 500ms ease;
+  }
+  .detail-item-icon {
+    color: #d6d3d1; /* text-stone-300 */
+    transition: color 500ms ease;
+  }
+
+  /* Desktop Hover Rules */
+  @media (hover: hover) {
+    .detail-item:hover .detail-item-icon-container {
+      background-color: var(--color-hover-accent);
+      border-color: rgba(181, 149, 90, 0.3);
+    }
+    .detail-item:hover .detail-item-icon {
+      color: var(--color-imperial-gold);
+    }
+  }
+
+  /* Mobile/Scroll Active State */
+  .detail-item.is-active .detail-item-icon-container {
+    background-color: var(--color-hover-accent);
+    border-color: rgba(181, 149, 90, 0.3);
+    transition: background-color 1200ms ease 400ms, border-color 1200ms ease 400ms;
+  }
+  .detail-item.is-active .detail-item-icon {
+    color: var(--color-imperial-gold);
+    transition: color 1200ms ease 400ms;
+  }
 }

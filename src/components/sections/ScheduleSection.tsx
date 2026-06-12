@@ -30,8 +30,8 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
   isMobile,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, amount: 0.3 });
-  const isActive = isMobile && isInView;
+  const isInView = useInView(ref, { once: true, amount: 0.3 });
+  const isActive = isInView;
   
   const Icon = { Wine, Utensils, Music, Heart }[item.icon] || Wine;
 
@@ -42,26 +42,14 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: idx * 0.2 }}
-      className={`text-center group border p-8 transition-all duration-700 ${
-        isActive 
-          ? "border-imperial-gold/15 bg-imperial-gold/[0.02]" 
-          : "border-transparent hover:border-imperial-gold/10"
+      className={`text-center p-8 border border-transparent rounded-lg schedule-card ${
+        isActive ? "is-active" : ""
       }`}
     >
-      <div className={`w-12 h-12 mx-auto border flex items-center justify-center mb-10 transition-transform duration-1000 ${
-        isActive 
-          ? "border-imperial-gold/60 rotate-0" 
-          : "border-imperial-gold/30 rotate-[45deg] group-hover:rotate-0"
-      }`}>
-        <Icon className={`w-4 h-4 transition-transform duration-1000 ${
-          isActive 
-            ? "text-imperial-gold rotate-0" 
-            : "text-imperial-gold -rotate-[45deg] group-hover:rotate-0"
-        }`} />
+      <div className="w-12 h-12 mx-auto border flex items-center justify-center mb-10 schedule-card-icon-container">
+        <Icon className="w-4 h-4 text-imperial-gold schedule-card-icon" />
       </div>
-      <span className={`font-display italic text-3xl transition-colors block mb-4 ${
-        isActive ? "text-imperial-gold" : "text-stone-300 group-hover:text-imperial-gold"
-      }`}>
+      <span className="font-display italic text-3xl text-stone-300 block mb-4 schedule-card-time">
         <EditableText 
           value={item.time} 
           onChange={v => {
@@ -83,9 +71,7 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
           canEdit={isAdminOpen}
         />
       </h4>
-      <p className={`text-stone-500 text-xs tracking-widest leading-relaxed uppercase transition-opacity ${
-        isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"
-      }`}>
+      <p className="text-stone-500 text-xs tracking-widest leading-relaxed uppercase opacity-60 schedule-card-desc">
         <EditableText 
           value={item.desc} 
           onChange={v => {

@@ -584,6 +584,7 @@ export default function App() {
                   displayContent={displayContent}
                   handlePreviewUpdate={handlePreviewUpdate}
                   isAdminOpen={isAdminOpen}
+                  isMobile={isMobile}
                 />
               );
             }
@@ -597,6 +598,7 @@ export default function App() {
                   isAdminOpen={isAdminOpen}
                   activeDetailsImage={activeDetailsImage}
                   activeDetailsStyle={activeDetailsStyle}
+                  isMobile={isMobile}
                 />
               );
             }

@@ -36,8 +36,8 @@ const DetailItem: React.FC<DetailItemProps> = ({
   isMobile,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, amount: 0.3 });
-  const isActive = isMobile && isInView;
+  const isInView = useInView(ref, { once: true, amount: 0.3 });
+  const isActive = isInView;
 
   const Icon = { MapPin, Info, Heart }[detail.icon] || Info;
 
@@ -48,18 +48,10 @@ const DetailItem: React.FC<DetailItemProps> = ({
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
       transition={{ delay: idx * 0.1, duration: 0.8 }}
-      className="flex gap-10 group"
+      className={`flex gap-10 detail-item ${isActive ? "is-active" : ""}`}
     >
-      <div className={`flex-shrink-0 w-16 h-16 border flex items-center justify-center transition-all duration-500 ${
-        isActive 
-          ? "bg-hover-accent border-imperial-gold/30" 
-          : "border-stone-100 group-hover:bg-hover-accent"
-      }`}>
-        <Icon className={`w-6 h-6 transition-colors ${
-          isActive 
-            ? "text-imperial-gold" 
-            : "text-stone-300 group-hover:text-imperial-gold"
-        }`} />
+      <div className="flex-shrink-0 w-16 h-16 border flex items-center justify-center detail-item-icon-container">
+        <Icon className="w-6 h-6 detail-item-icon" />
       </div>
       <div className="space-y-3">
         <h5 className="font-display text-2xl text-estate-green italic">
