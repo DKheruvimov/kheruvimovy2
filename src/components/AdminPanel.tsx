@@ -120,6 +120,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Telegram dynamic configuration state
   const [telegramBotToken, setTelegramBotToken] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
+  const [telegramApiBaseUrl, setTelegramApiBaseUrl] = useState('https://api.telegram.org');
   const [isSavingTelegram, setIsSavingTelegram] = useState(false);
   const [telegramStatusMessage, setTelegramStatusMessage] = useState('');
 
@@ -248,6 +249,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         const data = await res.json();
         setTelegramBotToken(data.botToken || '');
         setTelegramChatId(data.chatId || '');
+        setTelegramApiBaseUrl(data.apiBaseUrl || 'https://api.telegram.org');
       }
     } catch (err) {
       console.error("Failed to fetch Telegram config", err);
@@ -267,7 +269,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         },
         body: JSON.stringify({
           botToken: telegramBotToken,
-          chatId: telegramChatId
+          chatId: telegramChatId,
+          apiBaseUrl: telegramApiBaseUrl
         })
       });
       if (res.ok) {
@@ -718,6 +721,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             setTelegramBotToken={setTelegramBotToken}
             telegramChatId={telegramChatId}
             setTelegramChatId={setTelegramChatId}
+            telegramApiBaseUrl={telegramApiBaseUrl}
+            setTelegramApiBaseUrl={setTelegramApiBaseUrl}
             isSavingTelegram={isSavingTelegram}
             telegramStatusMessage={telegramStatusMessage}
             onSaveTelegramConfig={handleSaveTelegramConfig}

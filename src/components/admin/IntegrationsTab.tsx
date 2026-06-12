@@ -15,6 +15,8 @@ interface IntegrationsTabProps {
   setTelegramBotToken: (val: string) => void;
   telegramChatId: string;
   setTelegramChatId: (val: string) => void;
+  telegramApiBaseUrl: string;
+  setTelegramApiBaseUrl: (val: string) => void;
   isSavingTelegram: boolean;
   telegramStatusMessage: string;
   onSaveTelegramConfig: () => void;
@@ -33,6 +35,8 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   setTelegramBotToken,
   telegramChatId,
   setTelegramChatId,
+  telegramApiBaseUrl,
+  setTelegramApiBaseUrl,
   isSavingTelegram,
   telegramStatusMessage,
   onSaveTelegramConfig
@@ -90,7 +94,10 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`
         },
-        body: JSON.stringify({ botToken: telegramBotToken })
+        body: JSON.stringify({ 
+          botToken: telegramBotToken,
+          apiBaseUrl: telegramApiBaseUrl
+        })
       });
       if (res.ok) {
         const data = await res.json();
@@ -128,6 +135,21 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
               value={telegramBotToken}
               onChange={e => setTelegramBotToken(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] text-stone-400 uppercase font-bold font-sans">Альтернативный адрес API (API Base URL)</label>
+            <input 
+              type="text" 
+              placeholder="https://api.telegram.org"
+              className="w-full border-b border-stone-200 py-1.5 focus:border-imperial-gold outline-none text-sm bg-transparent font-mono text-stone-750"
+              value={telegramApiBaseUrl}
+              onChange={e => setTelegramApiBaseUrl(e.target.value)}
+            />
+            <p className="text-[9px] text-stone-400 mt-1 leading-normal font-sans">
+              По умолчанию: <code className="font-mono bg-stone-100 px-1 py-0.5 rounded text-stone-600">https://api.telegram.org</code>. 
+              Если ваш сервер (например, в российском облаке Cloud.ru / Сбер) блокирует прямые запросы к доменам Telegram, укажите адрес надежного прокси или зеркала (например, <code className="font-mono bg-stone-100 px-1 py-0.5 rounded text-stone-600">https://api.telegram-proxy.org</code> или аналогичный).
+            </p>
           </div>
 
           <div className="space-y-3">

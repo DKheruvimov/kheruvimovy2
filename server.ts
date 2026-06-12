@@ -1,7 +1,11 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import dns from "dns";
 import { createServer as createViteServer } from "vite";
+
+// Force Node.js fetch to prefer IPv4 over IPv6 to prevent container connection timeouts
+dns.setDefaultResultOrder("ipv4first");
 
 async function startServer() {
   const app = express();
@@ -46,23 +50,25 @@ async function startServer() {
   const getTelegramConfig = () => {
     let botToken = process.env.TELEGRAM_BOT_TOKEN || "";
     let chatId = process.env.TELEGRAM_CHAT_ID || "";
+    let apiBaseUrl = process.env.TELEGRAM_API_BASE_URL || "https://api.telegram.org";
     try {
       if (fs.existsSync(ADMIN_FILE)) {
         const adminData = JSON.parse(fs.readFileSync(ADMIN_FILE, "utf-8"));
         if (adminData.telegramConfig) {
           if (adminData.telegramConfig.botToken) botToken = adminData.telegramConfig.botToken;
           if (adminData.telegramConfig.chatId) chatId = adminData.telegramConfig.chatId;
+          if (adminData.telegramConfig.apiBaseUrl) apiBaseUrl = adminData.telegramConfig.apiBaseUrl;
         }
       }
     } catch (err) {
       console.error("Failed to read telegramConfig from admin file", err);
     }
-    return { botToken, chatId };
+    return { botToken, chatId, apiBaseUrl };
   };
 
   // Helper to send Telegram Notification for a new RSVP
   const sendRsvpTelegramNotification = async (rsvp: any) => {
-    const { botToken, chatId } = getTelegramConfig();
+    const { botToken, chatId, apiBaseUrl } = getTelegramConfig();
     if (!botToken || !chatId) {
       console.log("Telegram notification skipped: Bot Token or Chat ID not configured");
       return;
@@ -95,7 +101,7 @@ async function startServer() {
 
     for (const singleChatId of chatIds) {
       try {
-        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        const response = await fetch(`${apiBaseUrl}/bot${botToken}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -528,15 +534,17 @@ async function startServer() {
     if (!verifyAdminToken(req)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const { botToken, chatId } = req.body;
+    const { botToken, chatId, apiBaseUrl } = req.body;
     try {
       let adminData: any = { linkedYandexUsers: [] };
       if (fs.existsSync(ADMIN_FILE)) {
         adminData = JSON.parse(fs.readFileSync(ADMIN_FILE, "utf-8"));
       }
+      const resolvedApiBase = apiBaseUrl || "https://api.telegram.org";
       adminData.telegramConfig = {
         botToken: botToken || "",
-        chatId: chatId || ""
+        chatId: chatId || "",
+        apiBaseUrl: resolvedApiBase
       };
       fs.writeFileSync(ADMIN_FILE, JSON.stringify(adminData, null, 2));
 
@@ -544,9 +552,9 @@ async function startServer() {
       if (botToken) {
         const cleanAppUrl = getAppUrl(req);
         const webhookUrl = `${cleanAppUrl}/api/telegram-webhook`;
-        console.log(`Setting Telegram web hook: ${webhookUrl}`);
+        console.log(`Setting Telegram web hook: ${webhookUrl} using base URL: ${resolvedApiBase}`);
         try {
-          const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+          const response = await fetch(`${resolvedApiBase}/bot${botToken}/setWebhook`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: webhookUrl })
@@ -571,25 +579,27 @@ async function startServer() {
       return res.status(401).json({ error: "Unauthorized" });
     }
     
-    const { botToken } = req.body;
+    const { botToken, apiBaseUrl } = req.body;
     if (!botToken) {
       return res.status(400).json({ error: "Токен бота не указан" });
     }
 
+    const resolvedApiBase = apiBaseUrl || "https://api.telegram.org";
+
     try {
       // 1. Check getMe
-      const meResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+      const meResponse = await fetch(`${resolvedApiBase}/bot${botToken}/getMe`);
       const meData = await meResponse.json();
 
       // 2. Check getWebhookInfo
-      const infoResponse = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+      const infoResponse = await fetch(`${resolvedApiBase}/bot${botToken}/getWebhookInfo`);
       const infoData = await infoResponse.json();
 
       // 3. Re-register webhook to ensure fresh status
       const cleanAppUrl = getAppUrl(req);
       const webhookUrl = `${cleanAppUrl}/api/telegram-webhook`;
       
-      const registerResponse = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+      const registerResponse = await fetch(`${resolvedApiBase}/bot${botToken}/setWebhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: webhookUrl })
@@ -601,7 +611,8 @@ async function startServer() {
         me: meData,
         webhookInfo: infoData,
         register: registerData,
-        webhookUrl: webhookUrl
+        webhookUrl: webhookUrl,
+        resolvedApiBase: resolvedApiBase
       });
     } catch (err: any) {
       console.error("Telegram self-test failed:", err);
@@ -623,12 +634,12 @@ async function startServer() {
 
     if (!text) return;
 
-    const { botToken, chatId: configChatId } = getTelegramConfig();
+    const { botToken, chatId: configChatId, apiBaseUrl } = getTelegramConfig();
     if (!botToken) return;
 
     const sendTelegramMessage = async (targetChatId: string | number, htmlText: string) => {
       try {
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        await fetch(`${apiBaseUrl}/bot${botToken}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
