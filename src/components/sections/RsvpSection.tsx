@@ -68,139 +68,204 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="py-20 border border-imperial-gold/20 backdrop-blur-xl"
+              className="py-20 border border-imperial-gold/20 backdrop-blur-xl rounded-xl bg-stone-900/20"
             >
               <Ornament displayContent={displayContent} className="mx-auto mb-10" />
               <h3 className="text-4xl font-display mb-6 italic">Ваш ответъ принятъ</h3>
-              <p className="text-white/40 font-display text-xl px-8">Мы бесконечно польщены вашим ответом. До встречи на усадебном пиру.</p>
+              <p className="text-white/80 font-display text-xl px-8">Мы бесконечно польщены вашим ответом. До встречи на усадебном пиру.</p>
             </motion.div>
           ) : (
-            <form onSubmit={handleSubmit} className="text-left space-y-20">
-              <div className="grid md:grid-cols-2 gap-x-12 md:gap-x-20 gap-y-12">
-                <div className="space-y-6">
-                  <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold block">Имя Вашего Величества</label>
-                  <input 
-                    required
-                    type="text" 
-                    placeholder="Ваше Имя"
-                    className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light placeholder:text-white/5 text-white"
-                    value={formState.name}
-                    onChange={e => setFormState({...formState, name: e.target.value})}
-                  />
+            <form onSubmit={handleSubmit} className="text-left space-y-12">
+              
+              {/* STEP 1 */}
+              <div className="bg-stone-900/30 border border-white/10 rounded-xl p-6 md:p-8 space-y-6 relative hover:border-imperial-gold/20 transition-all pt-10">
+                <div className="absolute -top-3 left-6 px-4 py-1.5 bg-stone-950 border border-imperial-gold/40 rounded-full text-[10px] uppercase tracking-[0.2em] text-imperial-gold font-bold">
+                  Шагъ 1. Сведенiя о гостяхъ
                 </div>
-                <div className="space-y-6">
-                  <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold block">Будете одинъ или съ парой?</label>
-                  <select 
-                    className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light appearance-none cursor-pointer leading-tight"
-                    value={formState.guests}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setFormState(prev => ({
-                        ...prev,
-                        guests: val,
-                        guest2Name: val === "1" ? "" : prev.guest2Name
-                      }));
-                    }}
-                  >
-                    <option value="1" className="bg-stone-900">Буду одинъ</option>
-                    <option value="2" className="bg-stone-900">Будемъ вдвоемъ</option>
-                  </select>
+                
+                <div className="grid md:grid-cols-2 gap-6 pt-2">
+                  <div className="space-y-3">
+                    <label className="text-[11px] uppercase tracking-[0.25em] text-white/50 font-bold block">
+                      Имя Вашего Величества <span className="text-imperial-gold">*</span>
+                    </label>
+                    <input 
+                      required
+                      type="text" 
+                      placeholder="Имя и Фамилия"
+                      className="w-full bg-stone-950 border border-white/20 focus:border-imperial-gold rounded-lg px-4 py-4 focus:outline-none transition-colors font-display text-lg font-light placeholder:text-white/30 text-white"
+                      value={formState.name}
+                      onChange={e => setFormState({...formState, name: e.target.value})}
+                    />
+                    <p className="text-[10px] text-white/40 italic">Пожалуйста, напишите Ваше имя и фамилию</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[11px] uppercase tracking-[0.25em] text-white/50 font-bold block">Будете одинъ или съ парой?</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full bg-stone-950 border border-white/20 focus:border-imperial-gold rounded-lg px-4 py-4 focus:outline-none transition-colors font-display text-lg font-light appearance-none cursor-pointer text-white pr-10"
+                        value={formState.guests}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setFormState(prev => ({
+                            ...prev,
+                            guests: val,
+                            guest2Name: val === "1" ? "" : prev.guest2Name
+                          }));
+                        }}
+                      >
+                        <option value="1" className="bg-stone-950 text-white">Буду одинъ</option>
+                        <option value="2" className="bg-stone-950 text-white">Будемъ вдвоемъ</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 text-[10px]">
+                        ▼
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-white/40 italic">Укажите, придете ли Вы одинъ или со спутникомъ</p>
+                  </div>
                 </div>
 
-                <div className={`space-y-6 transition-all duration-300 ${formState.guests !== "2" ? "opacity-20 pointer-events-none" : ""}`}>
-                  <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold block">Имя спутника / спутницы</label>
+                <div className={`space-y-3 transition-all duration-300 ${formState.guests !== "2" ? "opacity-30" : "opacity-100"}`}>
+                  <label className="text-[11px] uppercase tracking-[0.25em] text-white/40 font-bold block flex items-center gap-2">
+                    <span>Имя спутника / спутницы</span>
+                    {formState.guests === "2" && <span className="text-imperial-gold font-bold">*</span>}
+                  </label>
                   <input 
                     required={formState.guests === "2"}
                     disabled={formState.guests !== "2"}
                     type="text" 
-                    placeholder={formState.guests === "2" ? "Имя спутника" : "Будетъ одинъ"}
-                    className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light placeholder:text-white/10 text-white disabled:cursor-not-allowed"
+                    placeholder={formState.guests === "2" ? "Имя спутника" : "Поле закрыто (выберите 'Будем вдвоем' выше)"}
+                    className="w-full bg-stone-950 border border-white/20 focus:border-imperial-gold rounded-lg px-4 py-4 focus:outline-none transition-colors font-display text-lg font-light placeholder:text-white/30 text-white disabled:bg-stone-900/40 disabled:border-white/5 disabled:cursor-not-allowed"
                     value={formState.guest2Name}
                     onChange={e => setFormState({...formState, guest2Name: e.target.value})}
                   />
-                </div>
-
-                <div className="space-y-6">
-                  <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold block">Намерены ли быть?</label>
-                  <select 
-                    className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light appearance-none cursor-pointer leading-tight"
-                    value={formState.attending}
-                    onChange={e => setFormState({...formState, attending: e.target.value})}
-                  >
-                    <option value="yes" className="bg-stone-900">
-                      {formState.guests === "2" ? "С радостiю прибудемъ" : "С радостiю прибуду"}
-                    </option>
-                    <option value="no" className="bg-stone-900">
-                      {formState.guests === "2" ? "Къ сожаленiю, отклонимъ" : "Къ сожаленiю, отклоню"}
-                    </option>
-                  </select>
+                  {formState.guests === "2" ? (
+                    <p className="text-[10px] text-imperial-gold italic font-medium animate-fadeIn">Пожалуйста, впишите имя Вашего спутника</p>
+                  ) : (
+                    <p className="text-[10px] text-white/40 italic">Станет активным, когда выбрано «Будем вдвоем»</p>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold block">Письмо молодымъ</label>
-                <textarea 
-                  rows={2}
-                  placeholder="Особые пожелания или вопросы..."
-                  className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light resize-none placeholder:text-white/5 leading-tight"
-                  value={formState.message}
-                  onChange={e => setFormState({...formState, message: e.target.value})}
-                />
-              </div>
+              {/* STEP 2 */}
+              <div className="bg-stone-900/30 border border-white/10 rounded-xl p-6 md:p-8 space-y-6 relative hover:border-imperial-gold/20 transition-all pt-10">
+                <div className="absolute -top-3 left-6 px-4 py-1.5 bg-stone-950 border border-imperial-gold/40 rounded-full text-[10px] uppercase tracking-[0.2em] text-imperial-gold font-bold">
+                  Шагъ 2. Участiе и пожелания
+                </div>
 
-              <div className="space-y-4">
-                <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold">Подтвержденiе личности</label>
-                {!yandexUser ? (
-                  <button 
-                    type="button"
-                    onClick={handleYandexLogin}
-                    disabled={isLoggingIn}
-                    className="w-full flex items-center justify-center gap-4 bg-white/5 border border-white/10 py-6 hover:bg-white/10 transition-all group disabled:opacity-50 cursor-pointer"
-                  >
-                    <span className="w-8 h-8 rounded-full bg-[#f33] flex items-center justify-center text-white font-bold italic">
-                      {isLoggingIn ? "..." : "Я"}
-                    </span>
-                    <div className="text-left">
-                      <p className="text-xs uppercase tracking-widest text-white/60 group-hover:text-white">
-                        {isLoggingIn ? "Ожиданiе ответа..." : "Подтвердить через Yandex ID"}
-                      </p>
-                      <p className="text-[10px] text-white/30">Безопасный входъ безъ лишнихъ словъ</p>
+                <div className="grid md:grid-cols-2 gap-6 pt-2">
+                  <div className="space-y-3">
+                    <label className="text-[11px] uppercase tracking-[0.25em] text-white/50 font-bold block">Намерены ли быть?</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full bg-stone-950 border border-white/20 focus:border-imperial-gold rounded-lg px-4 py-4 focus:outline-none transition-colors font-display text-lg font-light appearance-none cursor-pointer text-white pr-10"
+                        value={formState.attending}
+                        onChange={e => setFormState({...formState, attending: e.target.value})}
+                      >
+                        <option value="yes" className="bg-stone-950">
+                          {formState.guests === "2" ? "С радостiю прибудемъ" : "С радостiю прибуду"}
+                        </option>
+                        <option value="no" className="bg-stone-950">
+                          {formState.guests === "2" ? "Къ сожаленiю, отклонимъ" : "Къ сожаленiю, отклоню"}
+                        </option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 text-[10px]">
+                        ▼
+                      </div>
                     </div>
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-4 py-4 px-6 bg-imperial-gold/10 border border-imperial-gold/20 rounded">
-                    <img 
-                      src={`https://avatars.yandex.net/get-yapic/${yandexUser.default_avatar_id}/islands-middle`} 
-                      className="w-10 h-10 rounded-full border border-imperial-gold/30"
-                      alt="Yandex Avatar"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="text-left">
-                      <p className="text-sm font-display italic text-imperial-gold">{yandexUser.real_name || yandexUser.display_name}</p>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest underline decoration-imperial-gold/30">Личность подтверждена</p>
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={handleLogout}
-                      className="ml-auto text-white/20 hover:text-white/60 text-[10px] uppercase tracking-widest cursor-pointer"
-                    >
-                      Выйти
-                    </button>
+                    <p className="text-[10px] text-white/40 italic">Подтвердите Ваше присутствие</p>
                   </div>
-                )}
+
+                  <div className="space-y-3">
+                    <label className="text-[11px] uppercase tracking-[0.25em] text-white/50 font-bold block">Письмо молодымъ</label>
+                    <textarea 
+                      rows={2}
+                      placeholder="Особые пожелания, пожелания по меню..."
+                      className="w-full bg-stone-950 border border-white/20 focus:border-imperial-gold rounded-lg px-4 py-3 focus:outline-none transition-colors font-display text-lg font-light resize-none placeholder:text-white/30 text-white min-h-[58px]"
+                      value={formState.message}
+                      onChange={e => setFormState({...formState, message: e.target.value})}
+                    />
+                    <p className="text-[10px] text-white/40 italic">Пожелания, предпочтения или комментарии (необязательно)</p>
+                  </div>
+                </div>
               </div>
 
-              <button 
-                type="submit"
-                disabled={!yandexUser || isSubmitting}
-                className={`w-full border py-8 text-[11px] uppercase tracking-[0.7em] transition-all duration-1000 font-bold cursor-pointer ${
-                  yandexUser && !isSubmitting
-                  ? "border-imperial-gold/30 hover:bg-imperial-gold hover:text-stone-950" 
-                  : "border-white/5 text-white/10 cursor-not-allowed"
-                }`}
-              >
-                {isSubmitting ? "Отправка..." : (yandexUser ? "Запечатать письмо" : "Требуется авторизацiя")}
-              </button>
+              {/* STEP 3 */}
+              <div className="bg-stone-900/30 border border-white/10 rounded-xl p-6 md:p-8 space-y-6 relative hover:border-imperial-gold/20 transition-all pt-10">
+                <div className="absolute -top-3 left-6 px-4 py-1.5 bg-stone-950 border border-imperial-gold/40 rounded-full text-[10px] uppercase tracking-[0.2em] text-imperial-gold font-bold">
+                  Шагъ 3. Подпись и отправка
+                </div>
+
+                <div className="space-y-6 pt-2">
+                  <p className="text-xs md:text-sm text-white/70 leading-relaxed">
+                    Для отправки Вашего ответа, мы просим обязательно подтвердить личность кнопкой ниже (это займет 5 секунд и надежно защитит усадебную книгу от спама).
+                  </p>
+
+                  {!yandexUser ? (
+                    <div className="space-y-4">
+                      {/* Pulse-glow effect for Yandex login */}
+                      <button 
+                        type="button"
+                        onClick={handleYandexLogin}
+                        disabled={isLoggingIn}
+                        className="w-full flex items-center justify-center gap-4 bg-red-600/15 border border-red-500/50 hover:border-red-500 hover:bg-red-600/30 py-5 transition-all group disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(239,68,68,0.1)] rounded-lg animate-pulse"
+                      >
+                        <span className="w-8 h-8 rounded-full bg-[#f33] flex items-center justify-center text-white font-bold italic text-base shadow-[0_0_8px_rgba(243,51,51,0.4)]">
+                          {isLoggingIn ? "..." : "Я"}
+                        </span>
+                        <div className="text-left">
+                          <p className="text-xs uppercase tracking-widest text-[#ffa2a2] font-bold group-hover:text-white">
+                            {isLoggingIn ? "Ожиданiе ответа..." : "НАЖМИТЕ ДЛЯ ПОДТВЕРЖДЕНИЯ ЧЕРЕЗ ЯНДЕКС"}
+                          </p>
+                          <p className="text-[10px] text-white/50">Безопасный вход без лишних хлопот за 1 клик</p>
+                        </div>
+                      </button>
+                      
+                      <div className="bg-amber-500/10 border border-amber-500/30 py-3 px-4 rounded-lg text-xs text-amber-200/90 leading-normal flex items-start gap-2.5">
+                        <span className="text-amber-400 font-bold block pt-0.5">⚠️</span>
+                        <span>
+                          <strong>Внимание:</strong> Кнопка «Запечатать письмо» станет активной и доступной для нажатия только после того, как Вы нажмете на красную кнопку подтверждения Яндекс выше.
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center gap-4 py-4 px-6 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <img 
+                        src={`https://avatars.yandex.net/get-yapic/${yandexUser.default_avatar_id}/islands-middle`} 
+                        className="w-10 h-10 rounded-full border-2 border-green-500/40 shadow-[0_0_8px_rgba(34,197,94,0.2)]"
+                        alt="Yandex Avatar"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="text-center sm:text-left flex-grow">
+                        <p className="text-xs font-sans font-bold text-green-400 tracking-wider uppercase">Личность подтверждена! ✓</p>
+                        <p className="text-lg font-display italic text-white leading-normal">{yandexUser.real_name || yandexUser.display_name}</p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={handleLogout}
+                        className="text-white/40 hover:text-white/80 hover:underline text-xs tracking-wider cursor-pointer font-sans bg-transparent py-1 px-3 border border-white/10 rounded-md transition-colors"
+                      >
+                        Выйти / Другой профиль
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2">
+                  <button 
+                    type="submit"
+                    disabled={!yandexUser || isSubmitting}
+                    className={`w-full border py-5 text-xs md:text-sm uppercase tracking-[0.5em] transition-all duration-300 font-bold rounded-lg cursor-pointer ${
+                      yandexUser && !isSubmitting
+                      ? "border-imperial-gold/50 bg-imperial-gold/10 text-imperial-gold hover:bg-imperial-gold hover:text-stone-950 hover:shadow-[0_0_20px_rgba(212,175,55,0.35)]" 
+                      : "border-white/10 text-white/30 bg-stone-900/60 cursor-not-allowed"
+                    }`}
+                  >
+                    {isSubmitting ? "Отправка..." : (yandexUser ? "Запечатать письмо и отправить" : "Запечатать письмо (сначала подтвердите личность выше)")}
+                  </button>
+                </div>
+              </div>
+
             </form>
           )}
         </motion.div>
