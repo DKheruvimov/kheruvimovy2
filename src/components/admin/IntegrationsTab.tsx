@@ -157,11 +157,11 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           <h4 className="text-[10px] font-bold text-stone-600 uppercase tracking-widest">Инструкция по настройке Telegram-бота</h4>
           <ol className="text-[11px] text-stone-400 space-y-2 list-decimal list-inside leading-relaxed">
             <li>Найдите бота <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-imperial-gold underline hover:text-imperial-gold/80 transition-colors">@BotFather</a> в Telegram и создайте нового бота командой <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/newbot</code>.</li>
-            <li>Скопируйте предоставленный <b>API Token</b> и вставьте его в поле выше.</li>
-            <li>Каждый из вас двоих должен найти созданного бота в поиске Telegram, нажать <b>Запустить (Start)</b> и отправить команду <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/chatid</code>.</li>
-            <li>Бот ответит вашим персональным ID чата.</li>
-            <li>Укажите оба ваших ID через запятую в поле выше (например: <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">12345678, 87654321</code>) и нажмите кнопку <b>Сохранить Telegram</b>.</li>
-            <li><b>Использование списка гостей:</b> Каждый из вас может отправить команду <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/guests</code> прямо в личный чат с ботом, чтобы получить актуальный отчёт.</li>
+            <li>Скопируйте предоставленный <b>API Token</b>, вставьте его в поле выше и нажмите кнопку <b>Сохранить Telegram</b> внизу. <span className="text-imperial-gold font-semibold">Это обязательный шаг! Только после этого сервер подключит бота и активирует его вебхук.</span></li>
+            <li>Теперь вы и ваша невеста по отдельности должны найти вашего созданного бота в поиске Telegram, нажать <b>Запустить (Start)</b> и отправить ему команду <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/chatid</code>.</li>
+            <li>Так как вебхук уже активен, бот мгновенно ответит вашим персональным ID чата.</li>
+            <li>Добавьте ваши ID в поля ввода выше (нажмите кнопку «Добавить ID чата», чтобы появилось второе поле) и нажмите кнопку <b>Сохранить Telegram</b> ещё раз.</li>
+            <li><b>Использование списка гостей:</b> Каждый из вас может отправить команду <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/guests</code> (или нажать кнопку меню на клавиатуре) прямо в личный чат с ботом, чтобы получить актуальный отчёт.</li>
           </ol>
         </div>
       </div>
