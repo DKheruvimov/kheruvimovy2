@@ -573,6 +573,7 @@ export default function App() {
                   isAdminOpen={isAdminOpen}
                   activeStoryImage={activeStoryImage}
                   activeStoryStyle={activeStoryStyle}
+                  isMobile={isMobile}
                 />
               );
             }

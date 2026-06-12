@@ -15,6 +15,7 @@ interface StorySectionProps {
     x: number;
     y: number;
   };
+  isMobile: boolean;
 }
 
 export const StorySection: React.FC<StorySectionProps> = ({
@@ -22,8 +23,41 @@ export const StorySection: React.FC<StorySectionProps> = ({
   handlePreviewUpdate,
   isAdminOpen,
   activeStoryImage,
-  activeStoryStyle
+  activeStoryStyle,
+  isMobile
 }) => {
+  const size = isMobile 
+    ? (displayContent.storyQuoteSizeMobile ?? 180) 
+    : (displayContent.storyQuoteSizeDesktop ?? 288);
+
+  const getQuoteStyles = () => {
+    let paddingClass = "p-6 md:p-8";
+    let fontClass = "text-xl md:text-3xl";
+    let gapClass = "gap-4 md:gap-5";
+
+    if (size <= 140) {
+      paddingClass = "p-2.5";
+      fontClass = "text-xs sm:text-sm";
+      gapClass = "gap-1";
+    } else if (size <= 170) {
+      paddingClass = "p-3";
+      fontClass = "text-sm sm:text-base";
+      gapClass = "gap-1.5";
+    } else if (size <= 210) {
+      paddingClass = "p-4";
+      fontClass = "text-base sm:text-lg";
+      gapClass = "gap-2";
+    } else if (size <= 250) {
+      paddingClass = "p-5";
+      fontClass = "text-lg md:text-xl";
+      gapClass = "gap-3";
+    }
+
+    return { paddingClass, fontClass, gapClass };
+  };
+
+  const { paddingClass, fontClass, gapClass } = getQuoteStyles();
+
   return (
     <section className="py-24 md:py-60 px-6 container mx-auto max-w-6xl relative group">
       <div className="grid md:grid-cols-2 gap-24 items-center">
@@ -47,9 +81,15 @@ export const StorySection: React.FC<StorySectionProps> = ({
               }}
             />
           </div>
-          <div className="absolute -bottom-6 md:-bottom-10 -left-6 md:-left-10 bg-[var(--color-quote-bg)] text-imperial-gold shadow-2xl w-56 md:w-72 aspect-square flex items-center justify-center p-6 md:p-8">
-            <div className="w-fit max-w-full flex flex-col items-start gap-4 md:gap-6">
-              <p className="font-display italic text-xl md:text-2xl leading-tight text-left">
+          <div 
+            style={{
+              width: `${size}px`,
+              height: `${size}px`
+            }} 
+            className={`absolute -bottom-6 md:-bottom-10 -left-6 md:-left-10 bg-[var(--color-quote-bg)] text-imperial-gold shadow-2xl flex items-center justify-center ${paddingClass}`}
+          >
+            <div className={`w-fit max-w-full flex flex-col items-start ${gapClass}`}>
+              <p className={`font-display italic leading-tight text-left ${fontClass}`}>
                 <EditableText 
                   multiline
                   value={displayContent.storyQuote} 

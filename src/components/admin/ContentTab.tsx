@@ -551,7 +551,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
 
       {/* Story Text */}
       <section className="space-y-6">
-        <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Наша исторiя</h3>
+        <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Наша история</h3>
         <div className="space-y-4">
           <div className="space-y-1">
             <label className="text-[10px] text-stone-400 uppercase font-bold">Подзаголовок</label>
@@ -570,6 +570,41 @@ export const ContentTab: React.FC<ContentTabProps> = ({
               value={content.storyDescription}
               onChange={e => onChange('storyDescription', e.target.value)}
             />
+          </div>
+          <div className="pt-2 border-t border-dashed border-stone-200">
+            <h4 className="text-[10px] uppercase font-bold text-stone-400 mb-3">Размер блока с цитатой</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label className="text-[9px] text-stone-400 uppercase font-bold">Компьютерная версия</label>
+                  <span className="text-[10px] font-mono text-stone-500 font-semibold">{content.storyQuoteSizeDesktop ?? 288}px</span>
+                </div>
+                <input 
+                  type="range" 
+                  min={180} 
+                  max={380} 
+                  step={5}
+                  className="w-full accent-imperial-gold cursor-pointer"
+                  value={content.storyQuoteSizeDesktop ?? 288}
+                  onChange={e => onChange('storyQuoteSizeDesktop', parseInt(e.target.value) || 288)}
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label className="text-[9px] text-stone-400 uppercase font-bold">Мобильная версия</label>
+                  <span className="text-[10px] font-mono text-stone-500 font-semibold">{content.storyQuoteSizeMobile ?? 180}px</span>
+                </div>
+                <input 
+                  type="range" 
+                  min={120} 
+                  max={250} 
+                  step={5}
+                  className="w-full accent-imperial-gold cursor-pointer"
+                  value={content.storyQuoteSizeMobile ?? 180}
+                  onChange={e => onChange('storyQuoteSizeMobile', parseInt(e.target.value) || 180)}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>

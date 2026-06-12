@@ -48,6 +48,8 @@ export interface SiteContent {
   storyImageMobile?: string;
   storyStyleMobile?: ImageStyle;
   storyQuote: string;
+  storyQuoteSizeMobile?: number;
+  storyQuoteSizeDesktop?: number;
   signature: string;
   schedule: ScheduleItem[];
   details: DetailItem[];
@@ -104,6 +106,8 @@ export const defaultContent: SiteContent = {
   storyImageMobile: "",
   storyStyleMobile: defaultImageStyle,
   storyQuote: "«Любовь — это когда две души находят друг друга сквозь века...»",
+  storyQuoteSizeMobile: 180,
+  storyQuoteSizeDesktop: 288,
   signature: "Денис и Дарья Херувимовы",
   schedule: [
     { time: "17:00", event: "Встреча", icon: 'Wine', desc: "Тихий сбор родных и приветственный коктейль в усадебном саду" },
