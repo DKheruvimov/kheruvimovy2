@@ -26,13 +26,13 @@ export const DetailsSection: React.FC<DetailsSectionProps> = ({
 }) => {
   return (
     <section className="py-32 md:py-60 container mx-auto px-6 max-w-6xl relative">
-      <div className="grid md:grid-cols-2 gap-20 items-center">
+      <div className="space-y-6 mb-16 md:mb-24">
+        <h2 className="text-imperial-gold font-sans text-xs uppercase tracking-[0.6em] font-bold">Наставления</h2>
+        <h3 className="text-5xl md:text-6xl font-display italic text-estate-green font-light">Усадебный устав</h3>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-20 items-start">
         <div className="flex flex-col gap-16 order-2 md:order-1">
-          <div className="space-y-6">
-            <h2 className="text-imperial-gold font-sans text-xs uppercase tracking-[0.6em] font-bold">Наставления</h2>
-            <h3 className="text-5xl md:text-6xl font-display italic text-estate-green font-light">Усадебный устав</h3>
-          </div>
-          
           <div className="space-y-16">
             {displayContent.details.map((detail, idx) => {
               const Icon = { MapPin, Info, Heart }[detail.icon] || Info;
@@ -76,19 +76,22 @@ export const DetailsSection: React.FC<DetailsSectionProps> = ({
           initial={{ opacity: 0, scale: 1.02 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 2 }}
-          className="order-1 md:order-2 imperial-frame overflow-hidden"
+          transition={{ duration: 1.5 }}
+          className="relative p-4 md:p-12 border border-imperial-gold/10 order-1 md:order-2 w-full max-w-md mx-auto md:max-w-none md:mt-2"
         >
-          <img 
-            src={activeDetailsImage} 
-            alt="Manor Aesthetics" 
-            className="w-full aspect-[4/5] object-cover contrast-[1.1] grayscale-[0.05]"
-            referrerPolicy="no-referrer"
-            style={{
-              transform: `translate3d(var(--img-details-x, ${activeDetailsStyle.x}px), var(--img-details-y, ${activeDetailsStyle.y}px), 0) rotate(var(--img-details-rotate, ${activeDetailsStyle.rotate}deg)) scale(var(--img-details-scale, ${activeDetailsStyle.scale}))`,
-              willChange: 'transform'
-            }}
-          />
+          <div className="absolute inset-0 border border-imperial-gold/5 m-4" />
+          <div className="relative overflow-hidden aspect-[4/5]">
+            <img 
+              src={activeDetailsImage} 
+              alt="Manor Aesthetics" 
+              className="w-full h-full object-cover contrast-[1.1] grayscale-[0.05]"
+              referrerPolicy="no-referrer"
+              style={{
+                transform: `translate3d(var(--img-details-x, ${activeDetailsStyle.x}px), var(--img-details-y, ${activeDetailsStyle.y}px), 0) rotate(var(--img-details-rotate, ${activeDetailsStyle.rotate}deg)) scale(var(--img-details-scale, ${activeDetailsStyle.scale}))`,
+                willChange: 'transform'
+              }}
+            />
+          </div>
         </motion.div>
       </div>
     </section>
