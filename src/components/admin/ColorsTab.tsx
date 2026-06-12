@@ -10,7 +10,7 @@ const THEME_PRESETS = [
   {
     id: 'default',
     name: 'Основная усадебная',
-    desc: 'Оливково-золотой тонъ',
+    desc: 'Оливково-золотой тон',
     colors: {
       primary: '#b5955a',
       accent: '#b5955a',
@@ -22,8 +22,8 @@ const THEME_PRESETS = [
   },
   {
     id: 'burgundy',
-    name: 'Императорскій Бордо',
-    desc: 'Винно-малиновый тонъ',
+    name: 'Императорский Бордо',
+    desc: 'Винно-малиновый тон',
     colors: {
       primary: '#c29a53',
       accent: '#c29a53',
@@ -35,8 +35,8 @@ const THEME_PRESETS = [
   },
   {
     id: 'emerald',
-    name: 'Благородный Изумрудъ',
-    desc: 'Лесной бархатный тонъ',
+    name: 'Благородный Изумруд',
+    desc: 'Лесной бархатный тон',
     colors: {
       primary: '#b89553',
       accent: '#b89553',
@@ -48,8 +48,8 @@ const THEME_PRESETS = [
   },
   {
     id: 'sapphire',
-    name: 'Царскій Сапфиръ',
-    desc: 'Глубокiй синій тонъ',
+    name: 'Царский Сапфир',
+    desc: 'Глубокий синий тон',
     colors: {
       primary: '#c4a25c',
       accent: '#c4a25c',
@@ -81,10 +81,10 @@ export const ColorsTab: React.FC<ColorsTabProps> = ({ content, onChange }) => {
   };
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-8 pb-20 font-sans">
       <div className="space-y-4">
         <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2">Гармоничные темы усадьбы</h3>
-        <p className="text-[10px] text-stone-400">Выберите готовое цветовое решенiе въ благородныхъ имперскихъ оттенкахъ или настройте каждый элементъ самостоятельно ниже:</p>
+        <p className="text-[10px] text-stone-400">Выберите готовое цветовое решение в благородных оттенках или настройте каждый элемент самостоятельно ниже:</p>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           {THEME_PRESETS.map((preset) => {
@@ -101,7 +101,7 @@ export const ColorsTab: React.FC<ColorsTabProps> = ({ content, onChange }) => {
               >
                 <div>
                   <div className="flex justify-between items-start">
-                    <span className="font-display italic text-xs font-semibold text-stone-800 leading-none">{preset.name}</span>
+                    <span className="font-sans text-xs font-bold text-stone-800 leading-none">{preset.name}</span>
                     {active && (
                       <span className="text-[8px] uppercase tracking-wider text-imperial-gold font-bold bg-imperial-gold/10 px-1.5 py-0.5 rounded leading-none">Активна</span>
                     )}
@@ -195,7 +195,7 @@ export const ColorsTab: React.FC<ColorsTabProps> = ({ content, onChange }) => {
                 value={content.colors?.hover || ""}
                 onChange={e => onChange('colors', { ...content.colors, hover: e.target.value })}
               />
-              <p className="text-[8px] text-stone-300 uppercase tracking-widest">Цвет элементов при наведiи (например, иконки)</p>
+              <p className="text-[8px] text-stone-300 uppercase tracking-widest">Цвет элементов при наведении (например, иконки)</p>
             </div>
           </div>
         </div>

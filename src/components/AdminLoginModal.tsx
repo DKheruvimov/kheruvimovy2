@@ -77,8 +77,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           <div className="w-12 h-12 rounded-full bg-imperial-gold/10 border border-imperial-gold/20 flex items-center justify-center mx-auto mb-4">
             <Shield className="text-imperial-gold" size={24} />
           </div>
-          <h2 className="font-display italic text-3xl text-stone-900 font-medium mb-1">Ворота усадьбы</h2>
-          <p className="text-[9px] uppercase tracking-[0.3em] text-stone-400 font-bold">Вход в панель управления</p>
+          <h2 className="font-sans text-2xl text-stone-900 font-bold mb-1">Панель управления</h2>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-stone-400 font-bold">Вход для администратора</p>
         </div>
 
         {error && (
@@ -89,7 +89,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1">
-            <label className="text-[9px] uppercase tracking-wider text-stone-400 font-bold block">Логинъ</label>
+            <label className="text-[10px] uppercase tracking-wider text-stone-400 font-bold block">Логин</label>
             <input 
               required
               type="text" 
@@ -138,7 +138,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           </span>
           <div className="text-left">
             <p className="text-[10px] uppercase font-bold tracking-widest text-stone-600">
-              {isLoggingInYandex ? "Ожидание..." : "По велению Яндекс ID"}
+              {isLoggingInYandex ? "Ожидание..." : "Войти через Яндекс ID"}
             </p>
           </div>
         </button>

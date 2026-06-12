@@ -88,7 +88,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                   : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
                 }`}
               >
-                {content.countdownEnabled ? "Включенъ" : "Выключенъ"}
+                {content.countdownEnabled ? "Включен" : "Выключен"}
               </button>
             </div>
             {content.countdownEnabled && (
@@ -359,10 +359,10 @@ export const ContentTab: React.FC<ContentTabProps> = ({
             </span>
             <div>
               <h4 className="text-[9px] uppercase tracking-wider font-bold text-stone-400">
-                Редактируемый режимъ:
+                Редактируемый режим:
               </h4>
               <span className="text-xs font-semibold text-stone-800">
-                {isMobilePreview ? "Мобильная версія 📱" : "Компьютерная версія 💻"}
+                {isMobilePreview ? "Мобильная версия 📱" : "Компьютерная версия 💻"}
               </span>
             </div>
           </div>
@@ -371,7 +371,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
             onClick={onMobilePreviewToggle}
             className="px-3 py-1.5 bg-white border border-stone-200 hover:border-imperial-gold hover:text-imperial-gold text-stone-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            {isMobilePreview ? "На десктопъ" : "На мобильн."}
+            {isMobilePreview ? "На десктоп" : "На мобильный"}
           </button>
         </div>
 
@@ -577,7 +577,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
       {/* Schedule */}
       <section className="space-y-6">
         <div className="flex items-center justify-between border-b border-imperial-gold/10 pb-2">
-          <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Распорядокъ дня</h3>
+          <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Распорядок дня</h3>
         </div>
         <div className="space-y-4">
           {content.schedule.map((item, idx) => (
@@ -622,7 +622,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
       {/* Details */}
       <section className="space-y-6">
         <div className="flex items-center justify-between border-b border-imperial-gold/10 pb-2">
-          <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Усадебный уставъ</h3>
+          <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Усадебный устав</h3>
         </div>
         <div className="space-y-4">
           {content.details.map((item, idx) => (
@@ -655,15 +655,15 @@ export const ContentTab: React.FC<ContentTabProps> = ({
       {/* Section Management */}
       <section className="space-y-6 pt-6 border-t border-stone-200">
         <div className="space-y-1">
-          <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Управленіе секціями сайта</h3>
-          <p className="text-[10px] text-stone-400 text-left">Здесь Вы можете изменять порядокъ отображенiя, скрывать или добавлять новые собственные разделы.</p>
+          <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold">Управление секциями сайта</h3>
+          <p className="text-[10px] text-stone-400 text-left">Здесь Вы можете изменять порядок отображения, скрывать или добавлять новые собственные разделы.</p>
         </div>
         
         <div className="space-y-4">
           {(content.sections || [
-            { id: 'story', title: 'Наша исторiя', visible: true },
-            { id: 'schedule', title: 'Распорядокъ дня', visible: true },
-            { id: 'details', title: 'Усадебный уставъ', visible: true },
+            { id: 'story', title: 'Наша история', visible: true },
+            { id: 'schedule', title: 'Распорядок дня', visible: true },
+            { id: 'details', title: 'Усадебный устав', visible: true },
             { id: 'rsvp', title: 'Почта', visible: true }
           ]).map((sec, idx, arr) => {
             return (
@@ -671,7 +671,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-stone-400 font-mono">#{idx + 1}</span>
-                    <span className="text-sm font-semibold text-stone-800 font-display italic">{sec.title || "Без заглавiя"}</span>
+                    <span className="text-sm font-semibold text-stone-800">{sec.title || "Без названия"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     {/* Visibility Toggle */}
@@ -688,7 +688,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                         : 'bg-stone-200 text-stone-500 border border-stone-300'
                       }`}
                     >
-                      {sec.visible !== false ? "Виденъ" : "Скрытъ"}
+                      {sec.visible !== false ? "Виден" : "Скрыт"}
                     </button>
 
                     {/* Reordering Up */}
@@ -769,7 +769,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                 {sec.isCustom && (
                   <div className="pt-3 border-t border-dashed border-stone-200 space-y-3">
                     <div className="space-y-1">
-                      <label className="text-[9px] text-stone-400 uppercase font-bold">Названiе въ спискѣ</label>
+                      <label className="text-[9px] text-stone-400 uppercase font-bold">Название в списке</label>
                       <input 
                         type="text" 
                         className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
@@ -783,7 +783,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[9px] text-stone-400 uppercase font-bold">Подзаголовокъ (Subtitle)</label>
+                      <label className="text-[9px] text-stone-400 uppercase font-bold">Подзаголовок (Subtitle)</label>
                       <input 
                         type="text" 
                         className="w-full border-b border-stone-200 py-1 text-xs outline-none bg-transparent"
@@ -797,7 +797,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[9px] text-stone-400 uppercase font-bold">Основной текстъ</label>
+                      <label className="text-[9px] text-stone-400 uppercase font-bold">Основной текст</label>
                       <textarea 
                         rows={3}
                         className="w-full border border-stone-200 p-2 text-xs outline-none bg-transparent"
@@ -813,9 +813,9 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     {/* Image controls aligned to isMobilePreview */}
                     <div className="space-y-2 p-2 bg-white rounded border border-stone-100 shadow-sm">
                       <div className="flex justify-between items-center pb-1 border-b border-stone-100">
-                        <span className="text-[8px] uppercase font-bold text-stone-400 tracking-wider">Фото секціи</span>
+                        <span className="text-[8px] uppercase font-bold text-stone-400 tracking-wider">Фото секции</span>
                         <span className="text-[8px] font-bold text-imperial-gold uppercase tracking-wider">
-                          {isMobilePreview ? "Мобильная версія" : "Компьютерная версія"}
+                          {isMobilePreview ? "Мобильная версия" : "Компьютерная версия"}
                         </span>
                       </div>
 
@@ -874,7 +874,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                               </div>
                             </div>
                             <ImageStyleControls 
-                              label={`Позиціонированіе (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
+                              label={`Позиционирование (${isMobilePreview ? "Мобильная" : "Компьютерная"})`} 
                               style={currentStyle} 
                               onChange={s => {
                                 const newSections = [...arr];
@@ -898,17 +898,17 @@ export const ContentTab: React.FC<ContentTabProps> = ({
           type="button"
           onClick={() => {
             const defaultSecs = content.sections || [
-              { id: 'story', title: 'Наша исторiя', visible: true },
-              { id: 'schedule', title: 'Распорядокъ дня', visible: true },
-              { id: 'details', title: 'Усадебный уставъ', visible: true },
+              { id: 'story', title: 'Наша история', visible: true },
+              { id: 'schedule', title: 'Распорядок дня', visible: true },
+              { id: 'details', title: 'Усадебный устав', visible: true },
               { id: 'rsvp', title: 'Почта', visible: true }
             ];
             const newId = `custom_${Date.now()}`;
             const newSec = {
               id: newId,
-              title: `Новый раздѣлъ`,
-              subtitle: `Благородный раздѣлъ усадьбы`,
-              content: `Опишите здесь всѣ детали и прелести Вашего торжества.`,
+              title: `Новый раздел`,
+              subtitle: `Благородный раздел усадьбы`,
+              content: `Опишите здесь все детали и прелести Вашего торжества.`,
               visible: true,
               isCustom: true,
               image: "/images/details.jpg"
@@ -918,7 +918,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
           className="w-full py-3.5 bg-white border border-stone-200 hover:border-imperial-gold hover:text-imperial-gold text-stone-700 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
         >
           <Plus size={13} />
-          Создать новый собственный раздѣлъ
+          Создать новый собственный раздел
         </button>
       </section>
     </div>

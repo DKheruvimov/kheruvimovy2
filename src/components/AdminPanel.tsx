@@ -546,42 +546,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${activeTab === 'content' ? 'bg-imperial-gold/10 text-imperial-gold' : 'hover:bg-stone-100 text-stone-400'}`}
           >
             <Layout size={18} />
-            <span className="font-display italic text-lg leading-none pt-1">Контентъ</span>
+            <span className="font-sans text-sm font-semibold">Контент</span>
           </button>
           <button 
             onClick={() => setActiveTab('colors')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${activeTab === 'colors' ? 'bg-imperial-gold/10 text-imperial-gold' : 'hover:bg-stone-100 text-stone-400'}`}
           >
             <Palette size={18} />
-            <span className="font-display italic text-lg leading-none pt-1">Палитра</span>
+            <span className="font-sans text-sm font-semibold">Палитра</span>
           </button>
           <button 
             onClick={() => setActiveTab('rsvps')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${activeTab === 'rsvps' ? 'bg-imperial-gold/10 text-imperial-gold' : 'hover:bg-stone-100 text-stone-400'}`}
           >
             <Users size={18} />
-            <span className="font-display italic text-lg leading-none pt-1">Гости</span>
+            <span className="font-sans text-sm font-semibold">Гости</span>
           </button>
           <button 
             onClick={() => setActiveTab('access')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${activeTab === 'access' ? 'bg-imperial-gold/10 text-imperial-gold' : 'hover:bg-stone-100 text-stone-400'}`}
           >
             <Shield size={18} />
-            <span className="font-display italic text-lg leading-none pt-1">Доступъ</span>
+            <span className="font-sans text-sm font-semibold">Доступ</span>
           </button>
           <button 
             onClick={() => setActiveTab('yandex_config')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${activeTab === 'yandex_config' ? 'bg-imperial-gold/10 text-imperial-gold' : 'hover:bg-stone-100 text-stone-400'}`}
           >
             <Settings size={18} />
-            <span className="font-display italic text-lg leading-none pt-1">Yandex ID</span>
+            <span className="font-sans text-sm font-semibold">Yandex ID</span>
           </button>
           <button 
             onClick={() => setActiveTab('media')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${activeTab === 'media' ? 'bg-imperial-gold/10 text-imperial-gold' : 'hover:bg-stone-100 text-stone-400'}`}
           >
             <ImageIcon size={18} />
-            <span className="font-display italic text-lg leading-none pt-1">Медиатека</span>
+            <span className="font-sans text-sm font-semibold">Медиатека</span>
           </button>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">

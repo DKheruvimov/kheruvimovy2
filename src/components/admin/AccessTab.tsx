@@ -26,7 +26,7 @@ export const AccessTab: React.FC<AccessTabProps> = ({
       {/* Session Section */}
       <div>
         <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2 mb-4 font-sans">
-          Текущій сеансъ
+          Текущий сеанс
         </h3>
         <div className="bg-stone-50 border border-stone-100 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-3">
@@ -34,7 +34,7 @@ export const AccessTab: React.FC<AccessTabProps> = ({
               <Key size={14} />
             </div>
             <div>
-              <h4 className="font-display italic text-base leading-none">denis (Администратор)</h4>
+              <h4 className="font-sans font-semibold text-base leading-none text-stone-700">denis (Администратор)</h4>
               <p className="text-[8px] uppercase tracking-widest text-[#22c55e] font-semibold mt-1">Доступ разрешён</p>
             </div>
           </div>
@@ -52,7 +52,7 @@ export const AccessTab: React.FC<AccessTabProps> = ({
       {/* Yandex Link Section */}
       <div>
         <h3 className="text-[10px] uppercase tracking-widest font-bold text-imperial-gold border-b border-imperial-gold/10 pb-2 mb-4 font-sans">
-          Интеграція съ Яндекс ID
+          Интеграция с Яндекс ID
         </h3>
         
         {yandexUser ? (
@@ -64,7 +64,7 @@ export const AccessTab: React.FC<AccessTabProps> = ({
                 alt="Yandex Avatar"
               />
               <div>
-                <h4 className="font-display italic text-base leading-none">{yandexUser.real_name || yandexUser.display_name}</h4>
+                <h4 className="font-sans font-semibold text-base leading-none text-stone-700">{yandexUser.real_name || yandexUser.display_name}</h4>
                 <p className="text-[9px] text-stone-400 mt-1">Логин: {yandexUser.login}</p>
               </div>
             </div>
@@ -125,7 +125,7 @@ export const AccessTab: React.FC<AccessTabProps> = ({
                   />
                 )}
                 <div className="flex-grow min-w-0">
-                  <h4 className="font-display italic text-sm text-stone-700 truncate leading-none mb-1">{usr.realName || usr.login}</h4>
+                  <h4 className="font-sans font-semibold text-sm text-stone-700 truncate leading-none mb-1">{usr.realName || usr.login}</h4>
                   <p className="text-[8px] text-stone-400 uppercase tracking-widest">Логин: {usr.login}</p>
                 </div>
                 {confirmUnlinkId === usr.yandexId ? (
