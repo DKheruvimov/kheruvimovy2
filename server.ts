@@ -548,10 +548,9 @@ async function startServer() {
         try {
           const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
             method: 'POST',
-            sub_method: 'JSON',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: webhookUrl })
-          } as any);
+          });
           const result = await response.json();
           console.log("Telegram webhook registration result:", result);
         } catch (webhookErr) {
@@ -563,6 +562,50 @@ async function startServer() {
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Failed to save Telegram config" });
+    }
+  });
+
+  // POST test Telegram connection and fetch webhook status
+  app.post("/api/admin/telegram-test", async (req, res) => {
+    if (!verifyAdminToken(req)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    const { botToken } = req.body;
+    if (!botToken) {
+      return res.status(400).json({ error: "Токен бота не указан" });
+    }
+
+    try {
+      // 1. Check getMe
+      const meResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+      const meData = await meResponse.json();
+
+      // 2. Check getWebhookInfo
+      const infoResponse = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+      const infoData = await infoResponse.json();
+
+      // 3. Re-register webhook to ensure fresh status
+      const cleanAppUrl = getAppUrl(req);
+      const webhookUrl = `${cleanAppUrl}/api/telegram-webhook`;
+      
+      const registerResponse = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: webhookUrl })
+      });
+      const registerData = await registerResponse.json();
+
+      res.json({
+        success: true,
+        me: meData,
+        webhookInfo: infoData,
+        register: registerData,
+        webhookUrl: webhookUrl
+      });
+    } catch (err: any) {
+      console.error("Telegram self-test failed:", err);
+      res.status(500).json({ error: "Ошибка при запросе к Telegram API: " + err?.message });
     }
   });
 

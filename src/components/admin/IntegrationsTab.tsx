@@ -38,6 +38,9 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   onSaveTelegramConfig
 }) => {
   const [idFields, setIdFields] = useState<string[]>(['']);
+  const [testResult, setTestResult] = useState<any>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testError, setTestError] = useState('');
 
   useEffect(() => {
     const parsed = telegramChatId.split(',').map(s => s.trim()).filter(Boolean);
@@ -68,6 +71,40 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
     }
     setIdFields(newFields);
     setTelegramChatId(newFields.filter(Boolean).map(s => s.trim()).join(', '));
+  };
+
+  const handleTestBot = async () => {
+    if (!telegramBotToken) {
+      setTestError('Пожалуйста, укажите токен вашего Telegram-бота.');
+      return;
+    }
+    setIsTesting(true);
+    setTestError('');
+    setTestResult(null);
+
+    const adminToken = localStorage.getItem('adminToken');
+    try {
+      const res = await fetch('/api/admin/telegram-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ botToken: telegramBotToken })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTestResult(data);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setTestError(errData.error || 'Ошибка при тестировании соединения.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setTestError('Не удалось подключиться к серверу: ' + (err.message || ''));
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   return (
@@ -152,6 +189,99 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
         >
           {isSavingTelegram ? 'Сохранение...' : 'Сохранить Telegram'}
         </button>
+
+        {/* Diagnostic Connection Verification Tool */}
+        <div className="bg-stone-50 border border-stone-150 rounded-xl p-5 space-y-4 font-sans mt-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h4 className="text-[10px] font-bold text-stone-600 uppercase tracking-widest">Проверить связь с ботом</h4>
+              <p className="text-[10px] text-stone-400 mt-0.5 leading-normal">
+                Опросить сервера Telegram, проверить статус токена и активность вебхука в реальном времени.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleTestBot}
+              disabled={isTesting || !telegramBotToken}
+              className={`flex-shrink-0 flex items-center justify-center px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+                isTesting 
+                ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed'
+                : 'bg-white text-stone-700 hover:text-stone-900 hover:border-imperial-gold/35 border-stone-200 shadow-sm'
+              }`}
+            >
+              {isTesting ? 'Проверка...' : 'Проверить'}
+            </button>
+          </div>
+
+          {testError && (
+            <div className="p-3 bg-red-50 text-red-600 rounded text-[11px] font-medium border border-red-100/60 whitespace-pre-wrap">
+              ⚠️ {testError}
+            </div>
+          )}
+
+          {testResult && (
+            <div className="space-y-3 pt-3 text-[11px] border-t border-stone-100">
+              {/* Token validity */}
+              <div className="flex justify-between items-center bg-white px-3 py-2 rounded border border-stone-100">
+                <span className="text-stone-400 font-semibold">Статус токена:</span>
+                {testResult.me?.ok ? (
+                  <span className="text-green-600 font-bold flex items-center gap-1">
+                    🟢 Активен {testResult.me.result?.username ? `(@${testResult.me.result.username})` : ''}
+                  </span>
+                ) : (
+                  <span className="text-red-500 font-bold flex items-center gap-1">
+                    🔴 Ошибка (Токен недействителен)
+                  </span>
+                )}
+              </div>
+
+              {/* Registered Webhook URL */}
+              <div className="flex flex-col gap-1 bg-white px-3 py-2 rounded border border-stone-100">
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-stone-400 font-semibold">Webhook на сервере Telegram:</span>
+                  <span className="font-mono text-[9px] bg-stone-50 border px-1.5 py-0.5 rounded text-stone-600 truncate max-w-[200px]" title={testResult.webhookInfo?.result?.url || 'нет'}>
+                    {testResult.webhookInfo?.result?.url || 'не установлен'}
+                  </span>
+                </div>
+                {testResult.webhookUrl && !testResult.webhookUrl.includes('-pre-') && (
+                  <div className="text-[10px] text-amber-600 leading-normal bg-amber-50/50 p-2 border border-amber-100/50 rounded mt-2 font-sans font-medium">
+                    ⚠️ <b>Ограничение отладчика:</b> Вы находитесь на тестовом адресе разработки (DEV). Данная среда приватна и защищена OAuth-авторизацией, поэтому служба Telegram не может достучаться до неё. 
+                    <br/><br/>
+                    <b>Решение:</b> Перейдите по ссылке <b>Опубликованного проекта (Shared App URL)</b> с суффиксом <code className="bg-amber-100 px-1 border border-amber-200 rounded font-mono text-[9px]">-pre-</code>. Там бот заработает на 100% моментально, так как запросы доставляются публично и без ограничений!
+                  </div>
+                )}
+              </div>
+
+              {/* Status parameters */}
+              <div className="bg-white px-3 py-2.5 rounded border border-stone-100 space-y-2 text-[10px] leading-relaxed text-stone-500">
+                <div className="flex justify-between">
+                  <span className="text-stone-400 font-semibold">Очередь недоставленных апдейтов:</span>
+                  <span className={`font-mono font-bold ${testResult.webhookInfo?.result?.pending_update_count > 0 ? 'text-amber-500' : 'text-stone-700'}`}>
+                    {testResult.webhookInfo?.result?.pending_update_count || 0}
+                  </span>
+                </div>
+
+                {testResult.webhookInfo?.result?.last_error_message ? (
+                  <div className="pt-2 border-t border-stone-100/80">
+                    <span className="text-red-500 font-bold block mb-1">Последняя ошибка от Telegram:</span>
+                    <p className="bg-red-50/55 p-2 rounded text-red-700 font-mono text-[9px] break-all leading-normal border border-red-100/30">
+                      {testResult.webhookInfo.result.last_error_message}
+                    </p>
+                    <span className="text-stone-400 text-[9px] block mt-1">
+                      Время ошибки: {new Date(testResult.webhookInfo.result.last_error_date * 1000).toLocaleString('ru-RU')}
+                    </span>
+                  </div>
+                ) : (
+                  testResult.me?.ok && (
+                    <div className="text-green-600 font-medium pt-1 border-t border-stone-100/80">
+                      ✓ Ошибок подключения со стороны серверов Telegram не зафиксировано.
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="border-t border-stone-100 pt-6 space-y-3 font-sans">
           <h4 className="text-[10px] font-bold text-stone-600 uppercase tracking-widest">Инструкция по настройке Telegram-бота</h4>
