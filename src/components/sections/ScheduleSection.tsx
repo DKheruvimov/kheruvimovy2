@@ -31,7 +31,7 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
-  const isActive = isInView;
+  const isActive = isMobile && isInView;
   
   const Icon = { Wine, Utensils, Music, Heart }[item.icon] || Wine;
 

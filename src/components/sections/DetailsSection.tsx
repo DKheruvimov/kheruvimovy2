@@ -37,7 +37,7 @@ const DetailItem: React.FC<DetailItemProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
-  const isActive = isInView;
+  const isActive = isMobile && isInView;
 
   const Icon = { MapPin, Info, Heart }[detail.icon] || Info;
 
