@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface IntegrationsTabProps {
   yandexClientId: string;
@@ -36,6 +37,39 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   telegramStatusMessage,
   onSaveTelegramConfig
 }) => {
+  const [idFields, setIdFields] = useState<string[]>(['']);
+
+  useEffect(() => {
+    const parsed = telegramChatId.split(',').map(s => s.trim()).filter(Boolean);
+    const currentClean = idFields.filter(Boolean).map(s => s.trim());
+    const isDifferent = parsed.join(',') !== currentClean.join(',');
+    if (isDifferent) {
+      setIdFields(parsed.length > 0 ? parsed : ['']);
+    }
+  }, [telegramChatId]);
+
+  const handleFieldChange = (index: number, value: string) => {
+    const newFields = [...idFields];
+    newFields[index] = value;
+    setIdFields(newFields);
+    setTelegramChatId(newFields.filter(Boolean).map(s => s.trim()).join(', '));
+  };
+
+  const handleAddField = () => {
+    const newFields = [...idFields, ''];
+    setIdFields(newFields);
+    setTelegramChatId(newFields.filter(Boolean).map(s => s.trim()).join(', '));
+  };
+
+  const handleRemoveField = (index: number) => {
+    let newFields = idFields.filter((_, i) => i !== index);
+    if (newFields.length === 0) {
+      newFields = [''];
+    }
+    setIdFields(newFields);
+    setTelegramChatId(newFields.filter(Boolean).map(s => s.trim()).join(', '));
+  };
+
   return (
     <div className="space-y-12 pb-20">
       {/* 1. TELEGRAM SECTION */}
@@ -43,7 +77,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
         <div className="bg-imperial-gold/5 p-4 rounded-lg border border-imperial-gold/10">
           <p className="text-[10px] text-imperial-gold font-bold uppercase tracking-widest font-sans">Интеграция с Telegram</p>
           <p className="text-[10px] text-stone-500 mt-1 leading-relaxed font-sans">
-            Настройте отправку мгновенных уведомлений о подтверждении присутствия гостей в ваш Telegram чат или группу, а также получение списка гостей по команде.
+            Настройте отправку мгновенных уведомлений о подтверждении присутствия гостей прямо в личные сообщения с ботом для вас обоих (без создания общих групп). Поддерживает перечисление нескольких ID через запятую.
           </p>
         </div>
 
@@ -59,15 +93,41 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-[10px] text-stone-400 uppercase font-bold font-sans">ID чата / группы (Chat ID)</label>
-            <input 
-              type="text" 
-              placeholder="Например, -1001234567890"
-              className="w-full border-b border-stone-200 py-1.5 focus:border-imperial-gold outline-none text-sm bg-transparent font-mono text-stone-750"
-              value={telegramChatId}
-              onChange={e => setTelegramChatId(e.target.value)}
-            />
+          <div className="space-y-3">
+            <label className="text-[10px] text-stone-400 uppercase font-bold font-sans block mb-1">ID чатов пользователей</label>
+            
+            <div className="space-y-2">
+              {idFields.map((field, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Например: 123456789"
+                    className="flex-1 border-b border-stone-200 py-1.5 focus:border-imperial-gold outline-none text-sm bg-transparent font-mono text-stone-750"
+                    value={field}
+                    onChange={e => handleFieldChange(idx, e.target.value)}
+                  />
+                  {idFields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveField(idx)}
+                      className="p-1 px-2 border border-red-200 hover:bg-red-50 text-red-500 rounded transition-colors"
+                      title="Удалить ID"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddField}
+              className="flex items-center gap-1 text-[10px] text-imperial-gold font-bold uppercase tracking-wider py-1 hover:text-stone-800 transition-colors"
+            >
+              <Plus size={14} />
+              Добавить ID чата
+            </button>
           </div>
         </div>
 
@@ -98,10 +158,10 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           <ol className="text-[11px] text-stone-400 space-y-2 list-decimal list-inside leading-relaxed">
             <li>Найдите бота <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-imperial-gold underline hover:text-imperial-gold/80 transition-colors">@BotFather</a> в Telegram и создайте нового бота командой <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/newbot</code>.</li>
             <li>Скопируйте предоставленный <b>API Token</b> и вставьте его в поле выше.</li>
-            <li>Добавьте вашего созданного бота в <b>совместную группу</b> или чат.</li>
-            <li>Отправьте сообщение <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/chatid</code> в этой группе — бот мгновенно ответит сообщением с ID чата.</li>
-            <li>Скопируйте полученный <b>ID чата</b> (включая знак минус, если группа) и вставьте его выше, затем нажмите кнопку <b>Сохранить Telegram</b>.</li>
-            <li><b>Использование списка гостей:</b> Теперь вы можете в любое время отправить команду <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/guests</code> прямо в настроенном чате, чтобы получить актуальный отчёт.</li>
+            <li>Каждый из вас двоих должен найти созданного бота в поиске Telegram, нажать <b>Запустить (Start)</b> и отправить команду <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/chatid</code>.</li>
+            <li>Бот ответит вашим персональным ID чата.</li>
+            <li>Укажите оба ваших ID через запятую в поле выше (например: <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">12345678, 87654321</code>) и нажмите кнопку <b>Сохранить Telegram</b>.</li>
+            <li><b>Использование списка гостей:</b> Каждый из вас может отправить команду <code className="bg-stone-50 px-1 border rounded font-mono text-[10px]">/guests</code> прямо в личный чат с ботом, чтобы получить актуальный отчёт.</li>
           </ol>
         </div>
       </div>

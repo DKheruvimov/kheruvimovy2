@@ -68,6 +68,9 @@ async function startServer() {
       return;
     }
 
+    const chatIds = chatId.split(',').map((id: string) => id.trim()).filter(Boolean);
+    if (chatIds.length === 0) return;
+
     const isAttending = rsvp.attending === "yes";
     const statusText = isAttending ? "Прибыл(а) на торжество" : "К сожалению, не прибудет";
     
@@ -90,20 +93,22 @@ async function startServer() {
       text += `\n<i>Авторизован через Яндекс: ${rsvp.yandexLogin}</i>`;
     }
 
-    try {
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: text,
-          parse_mode: "HTML"
-        })
-      });
-      const result = await response.json();
-      console.log("Telegram RSVP notification response:", result);
-    } catch (err) {
-      console.error("Failed to send Telegram RSVP notification", err);
+    for (const singleChatId of chatIds) {
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: singleChatId,
+            text: text,
+            parse_mode: "HTML"
+          })
+        });
+        const result = await response.json();
+        console.log(`Telegram RSVP notification response for ${singleChatId}:`, result);
+      } catch (err) {
+        console.error(`Failed to send Telegram RSVP notification to ${singleChatId}`, err);
+      }
     }
   };
 
@@ -586,7 +591,15 @@ async function startServer() {
           body: JSON.stringify({
             chat_id: targetChatId,
             text: htmlText,
-            parse_mode: "HTML"
+            parse_mode: "HTML",
+            reply_markup: {
+              keyboard: [
+                [{ text: "📊 Список гостей" }],
+                [{ text: "ℹ️ ID этого чата" }]
+              ],
+              resize_keyboard: true,
+              one_time_keyboard: false
+            }
           })
         });
       } catch (err) {
@@ -594,8 +607,8 @@ async function startServer() {
       }
     };
 
-    // 1. /chatid command (useful to discover chat ID, works anywhere)
-    if (text.startsWith("/chatid")) {
+    // 1. /chatid command or custom keyboard button
+    if (text === "ℹ️ ID этого чата" || text.startsWith("/chatid")) {
       const respText = `ID этого чата: <code>${chatIdOnMessage}</code>\nУкажите его в панели управления интеграциями усадьбы.`;
       await sendTelegramMessage(chatIdOnMessage, respText);
       return;
@@ -603,17 +616,17 @@ async function startServer() {
 
     // 2. /start command
     if (text.startsWith("/start")) {
-      const respText = `Приветствую! Я бот усадьбы.\nID этого чата: <code>${chatIdOnMessage}</code>\nБуду присылать уведомления о новых гостях сюда.\n\nВведите /guests в настроенном чате, чтобы получить список гостей.`;
+      const respText = `Приветствую! Я бот усадьбы.\nВаш ID чата: <code>${chatIdOnMessage}</code>\nБуду присылать уведомления о новых откликах на приглашение сюда.\n\nИспользуйте интерактивное меню ниже для быстрого взаимодействия с ботом!`;
       await sendTelegramMessage(chatIdOnMessage, respText);
       return;
     }
 
-    // 3. /guests command (restricted to configured chat only)
-    const normalizedConfigChatId = String(configChatId).trim();
+    // 3. /guests command or custom keyboard button (restricted to configured chats)
+    const chatIds = configChatId.split(',').map((id: string) => id.trim()).filter(Boolean);
     const normalizedChatIdOnMessage = String(chatIdOnMessage).trim();
-    const isAuthorized = normalizedConfigChatId && (normalizedChatIdOnMessage === normalizedConfigChatId);
+    const isAuthorized = chatIds.includes(normalizedChatIdOnMessage);
 
-    if (text.startsWith("/guests") || text.split("@")[0] === "/guests") {
+    if (text === "📊 Список гостей" || text.startsWith("/guests") || text.split("@")[0] === "/guests") {
       if (!isAuthorized) {
         await sendTelegramMessage(chatIdOnMessage, "Доступ ограничен. Запросы разрешены только из настроенного чата управления.");
         return;
