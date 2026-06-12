@@ -10,7 +10,7 @@ import { ContentTab } from './admin/ContentTab';
 import { ColorsTab } from './admin/ColorsTab';
 import { RsvpsTab } from './admin/RsvpsTab';
 import { AccessTab } from './admin/AccessTab';
-import { YandexConfigTab } from './admin/YandexConfigTab';
+import { IntegrationsTab } from './admin/IntegrationsTab';
 import { MediaTab } from './admin/MediaTab';
 
 interface AdminPanelProps {
@@ -117,6 +117,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isSavingYandex, setIsSavingYandex] = useState(false);
   const [yandexStatusMessage, setYandexStatusMessage] = useState('');
 
+  // Telegram dynamic configuration state
+  const [telegramBotToken, setTelegramBotToken] = useState('');
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [isSavingTelegram, setIsSavingTelegram] = useState(false);
+  const [telegramStatusMessage, setTelegramStatusMessage] = useState('');
+
   const adminToken = localStorage.getItem('adminToken');
 
   useEffect(() => {
@@ -126,6 +132,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       fetchLinkedYandex();
     } else if (activeTab === 'yandex_config') {
       fetchYandexConfig();
+      fetchTelegramConfig();
     } else if (activeTab === 'media') {
       fetchMediaFiles();
     }
@@ -228,6 +235,51 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setYandexStatusMessage('Не удалось подключиться к серверу.');
     } finally {
       setIsSavingYandex(false);
+    }
+  };
+
+  const fetchTelegramConfig = async () => {
+    if (!adminToken) return;
+    try {
+      const res = await fetch('/api/admin/telegram-config', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTelegramBotToken(data.botToken || '');
+        setTelegramChatId(data.chatId || '');
+      }
+    } catch (err) {
+      console.error("Failed to fetch Telegram config", err);
+    }
+  };
+
+  const handleSaveTelegramConfig = async () => {
+    if (!adminToken) return;
+    setIsSavingTelegram(true);
+    setTelegramStatusMessage('');
+    try {
+      const res = await fetch('/api/admin/telegram-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          botToken: telegramBotToken,
+          chatId: telegramChatId
+        })
+      });
+      if (res.ok) {
+        setTelegramStatusMessage('Настройки сохранены благополучно!');
+      } else {
+        setTelegramStatusMessage('Ошибка сохранения настроек.');
+      }
+    } catch (err) {
+      console.error(err);
+      setTelegramStatusMessage('Не удалось подключиться к серверу.');
+    } finally {
+      setIsSavingTelegram(false);
     }
   };
 
@@ -574,7 +626,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${activeTab === 'yandex_config' ? 'bg-imperial-gold/10 text-imperial-gold' : 'hover:bg-stone-100 text-stone-400'}`}
           >
             <Settings size={18} />
-            <span className="font-sans text-sm font-semibold">Yandex ID</span>
+            <span className="font-sans text-sm font-semibold">Интеграции</span>
           </button>
           <button 
             onClick={() => setActiveTab('media')}
@@ -654,7 +706,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             onUnlinkYandex={handleUnlinkYandex}
           />
         ) : activeTab === 'yandex_config' ? (
-          <YandexConfigTab
+          <IntegrationsTab
             yandexClientId={yandexClientId}
             setYandexClientId={setYandexClientId}
             yandexClientSecret={yandexClientSecret}
@@ -662,6 +714,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             isSavingYandex={isSavingYandex}
             yandexStatusMessage={yandexStatusMessage}
             onSaveConfig={handleSaveYandexConfig}
+            telegramBotToken={telegramBotToken}
+            setTelegramBotToken={setTelegramBotToken}
+            telegramChatId={telegramChatId}
+            setTelegramChatId={setTelegramChatId}
+            isSavingTelegram={isSavingTelegram}
+            telegramStatusMessage={telegramStatusMessage}
+            onSaveTelegramConfig={handleSaveTelegramConfig}
           />
         ) : activeTab === 'media' ? (
           <MediaTab

@@ -42,6 +42,71 @@ async function startServer() {
     return { clientId, clientSecret };
   };
 
+  // Helper to get Telegram config (stored settings or .env fallback)
+  const getTelegramConfig = () => {
+    let botToken = process.env.TELEGRAM_BOT_TOKEN || "";
+    let chatId = process.env.TELEGRAM_CHAT_ID || "";
+    try {
+      if (fs.existsSync(ADMIN_FILE)) {
+        const adminData = JSON.parse(fs.readFileSync(ADMIN_FILE, "utf-8"));
+        if (adminData.telegramConfig) {
+          if (adminData.telegramConfig.botToken) botToken = adminData.telegramConfig.botToken;
+          if (adminData.telegramConfig.chatId) chatId = adminData.telegramConfig.chatId;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to read telegramConfig from admin file", err);
+    }
+    return { botToken, chatId };
+  };
+
+  // Helper to send Telegram Notification for a new RSVP
+  const sendRsvpTelegramNotification = async (rsvp: any) => {
+    const { botToken, chatId } = getTelegramConfig();
+    if (!botToken || !chatId) {
+      console.log("Telegram notification skipped: Bot Token or Chat ID not configured");
+      return;
+    }
+
+    const isAttending = rsvp.attending === "yes";
+    const statusText = isAttending ? "Прибыл(а) на торжество" : "К сожалению, не прибудет";
+    
+    let text = `<b>Новое подтверждение присутствия!</b>\n\n`;
+    text += `<b>Имя:</b> ${rsvp.name}\n`;
+    text += `<b>Статус:</b> ${statusText}\n`;
+    
+    if (isAttending) {
+      text += `<b>Количество гостей:</b> ${rsvp.guests || 1}\n`;
+      if (rsvp.guest2Name && rsvp.guest2Name.trim()) {
+        text += `<b>Спутник:</b> ${rsvp.guest2Name}\n`;
+      }
+    }
+
+    if (rsvp.message && rsvp.message.trim()) {
+      text += `<b>Пожелания / Сообщение:</b>\n<i>${rsvp.message.trim()}</i>\n`;
+    }
+
+    if (rsvp.yandexLogin) {
+      text += `\n<i>Авторизован через Яндекс: ${rsvp.yandexLogin}</i>`;
+    }
+
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: text,
+          parse_mode: "HTML"
+        })
+      });
+      const result = await response.json();
+      console.log("Telegram RSVP notification response:", result);
+    } catch (err) {
+      console.error("Failed to send Telegram RSVP notification", err);
+    }
+  };
+
   // Helper to construct app URL robustly
   const getAppUrl = (req: any) => {
     let appUrl = (req.query.origin as string) || process.env.APP_URL;
@@ -173,6 +238,12 @@ async function startServer() {
       }
 
       fs.writeFileSync(RSVP_FILE, JSON.stringify(rsvps, null, 2));
+
+      // Send Telegram notification in background
+      sendRsvpTelegramNotification(newRsvp).catch(err => {
+        console.error("Failed to send background Telegram notification:", err);
+      });
+
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: "Failed to save rsvp" });
@@ -436,6 +507,179 @@ async function startServer() {
       res.json({ success: true, config: adminData.yandexConfig });
     } catch (err) {
       res.status(500).json({ error: "Failed to save Yandex config" });
+    }
+  });
+
+  // GET admin Telegram config
+  app.get("/api/admin/telegram-config", (req, res) => {
+    if (!verifyAdminToken(req)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    res.json(getTelegramConfig());
+  });
+
+  // POST admin Telegram config
+  app.post("/api/admin/telegram-config", async (req, res) => {
+    if (!verifyAdminToken(req)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const { botToken, chatId } = req.body;
+    try {
+      let adminData: any = { linkedYandexUsers: [] };
+      if (fs.existsSync(ADMIN_FILE)) {
+        adminData = JSON.parse(fs.readFileSync(ADMIN_FILE, "utf-8"));
+      }
+      adminData.telegramConfig = {
+        botToken: botToken || "",
+        chatId: chatId || ""
+      };
+      fs.writeFileSync(ADMIN_FILE, JSON.stringify(adminData, null, 2));
+
+      // Auto-register webhook with Telegram if token is provided
+      if (botToken) {
+        const cleanAppUrl = getAppUrl(req);
+        const webhookUrl = `${cleanAppUrl}/api/telegram-webhook`;
+        console.log(`Setting Telegram web hook: ${webhookUrl}`);
+        try {
+          const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+            method: 'POST',
+            sub_method: 'JSON',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: webhookUrl })
+          } as any);
+          const result = await response.json();
+          console.log("Telegram webhook registration result:", result);
+        } catch (webhookErr) {
+          console.error("Failed to set Telegram webhook:", webhookErr);
+        }
+      }
+
+      res.json({ success: true, config: adminData.telegramConfig });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to save Telegram config" });
+    }
+  });
+
+  // Telegram Bot Webhook
+  app.post("/api/telegram-webhook", async (req, res) => {
+    // Reply immediately to Telegram to prevent retry loops
+    res.sendStatus(200);
+
+    const update = req.body;
+    if (!update || !update.message) return;
+
+    const message = update.message;
+    const text = message.text ? message.text.trim() : "";
+    const chatIdOnMessage = message.chat?.id;
+
+    if (!text) return;
+
+    const { botToken, chatId: configChatId } = getTelegramConfig();
+    if (!botToken) return;
+
+    const sendTelegramMessage = async (targetChatId: string | number, htmlText: string) => {
+      try {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: targetChatId,
+            text: htmlText,
+            parse_mode: "HTML"
+          })
+        });
+      } catch (err) {
+        console.error("Failed to send Telegram message", err);
+      }
+    };
+
+    // 1. /chatid command (useful to discover chat ID, works anywhere)
+    if (text.startsWith("/chatid")) {
+      const respText = `ID этого чата: <code>${chatIdOnMessage}</code>\nУкажите его в панели управления интеграциями усадьбы.`;
+      await sendTelegramMessage(chatIdOnMessage, respText);
+      return;
+    }
+
+    // 2. /start command
+    if (text.startsWith("/start")) {
+      const respText = `Приветствую! Я бот усадьбы.\nID этого чата: <code>${chatIdOnMessage}</code>\nБуду присылать уведомления о новых гостях сюда.\n\nВведите /guests в настроенном чате, чтобы получить список гостей.`;
+      await sendTelegramMessage(chatIdOnMessage, respText);
+      return;
+    }
+
+    // 3. /guests command (restricted to configured chat only)
+    const normalizedConfigChatId = String(configChatId).trim();
+    const normalizedChatIdOnMessage = String(chatIdOnMessage).trim();
+    const isAuthorized = normalizedConfigChatId && (normalizedChatIdOnMessage === normalizedConfigChatId);
+
+    if (text.startsWith("/guests") || text.split("@")[0] === "/guests") {
+      if (!isAuthorized) {
+        await sendTelegramMessage(chatIdOnMessage, "Доступ ограничен. Запросы разрешены только из настроенного чата управления.");
+        return;
+      }
+
+      try {
+        let rsvps = [];
+        if (fs.existsSync(RSVP_FILE)) {
+          rsvps = JSON.parse(fs.readFileSync(RSVP_FILE, "utf-8"));
+        }
+
+        if (rsvps.length === 0) {
+          await sendTelegramMessage(chatIdOnMessage, "Список гостей пока пуст.");
+          return;
+        }
+
+        let attendingCount = 0;
+        let declinedCount = 0;
+        let totalGuests = 0;
+
+        const listLines = rsvps.map((r: any, idx: number) => {
+          const isAttending = r.attending === "yes";
+          if (isAttending) {
+            attendingCount++;
+            const guestNum = parseInt(r.guests) || 1;
+            totalGuests += guestNum;
+          } else {
+            declinedCount++;
+          }
+
+          let line = `${idx + 1}. <b>${r.name}</b>\n   Статус: ${isAttending ? "Прибудет" : "Не прибудет"}`;
+          if (isAttending) {
+            line += ` (Человек: ${r.guests})`;
+          }
+          if (r.guest2Name) {
+            line += `\n   Спутник: ${r.guest2Name}`;
+          }
+          if (r.message && r.message.trim()) {
+            line += `\n   Текст: <i>${r.message.trim()}</i>`;
+          }
+          return line;
+        });
+
+        const header = `<b>Текущий список гостей усадьбы:</b>\nВсего откликов: ${rsvps.length}\nПрибудет человек: ${totalGuests} (из ${attendingCount} семейств)\nНе прибудет: ${declinedCount}\n\n`;
+        const fullMessage = header + listLines.join("\n\n");
+
+        if (fullMessage.length < 4000) {
+          await sendTelegramMessage(chatIdOnMessage, fullMessage);
+        } else {
+          let currentChunk = header;
+          for (let i = 0; i < listLines.length; i++) {
+            const line = listLines[i] + "\n\n";
+            if (currentChunk.length + line.length > 3900) {
+              await sendTelegramMessage(chatIdOnMessage, currentChunk);
+              currentChunk = "";
+            }
+            currentChunk += line;
+          }
+          if (currentChunk.trim()) {
+            await sendTelegramMessage(chatIdOnMessage, currentChunk);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to read RSVPs in webhook", err);
+        await sendTelegramMessage(chatIdOnMessage, "Ошибка при чтении списка гостей со стороны усадьбы.");
+      }
     }
   });
 
