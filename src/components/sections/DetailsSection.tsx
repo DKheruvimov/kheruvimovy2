@@ -1,5 +1,5 @@
-import React from "react";
-import { motion } from "motion/react";
+import React, { useRef } from "react";
+import { motion, useInView } from "motion/react";
 import { MapPin, Info, Heart } from "lucide-react";
 import { SiteContent } from "../../types";
 import { EditableText } from "../EditableText";
@@ -15,14 +15,88 @@ interface DetailsSectionProps {
     x: number;
     y: number;
   };
+  isMobile: boolean;
 }
+
+interface DetailItemProps {
+  detail: any;
+  idx: number;
+  displayContent: SiteContent;
+  handlePreviewUpdate: (newContent: SiteContent) => void;
+  isAdminOpen: boolean;
+  isMobile: boolean;
+}
+
+const DetailItem: React.FC<DetailItemProps> = ({
+  detail,
+  idx,
+  displayContent,
+  handlePreviewUpdate,
+  isAdminOpen,
+  isMobile,
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  const isActive = isMobile && isInView;
+
+  const Icon = { MapPin, Info, Heart }[detail.icon] || Info;
+
+  return (
+    <motion.div 
+      ref={ref}
+      initial={{ opacity: 0, x: -20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: idx * 0.1, duration: 0.8 }}
+      className="flex gap-10 group"
+    >
+      <div className={`flex-shrink-0 w-16 h-16 border flex items-center justify-center transition-all duration-500 ${
+        isActive 
+          ? "bg-hover-accent border-imperial-gold/30" 
+          : "border-stone-100 group-hover:bg-hover-accent"
+      }`}>
+        <Icon className={`w-6 h-6 transition-colors ${
+          isActive 
+            ? "text-imperial-gold" 
+            : "text-stone-300 group-hover:text-imperial-gold"
+        }`} />
+      </div>
+      <div className="space-y-3">
+        <h5 className="font-display text-2xl text-estate-green italic">
+          <EditableText 
+            value={detail.title} 
+            onChange={v => {
+              const newDetails = [...displayContent.details];
+              newDetails[idx] = { ...detail, title: v };
+              handlePreviewUpdate({ ...displayContent, details: newDetails });
+            }}
+            canEdit={isAdminOpen}
+          />
+        </h5>
+        <p className="text-stone-500 font-light leading-loose">
+          <EditableText 
+            multiline
+            value={detail.content} 
+            onChange={v => {
+              const newDetails = [...displayContent.details];
+              newDetails[idx] = { ...detail, content: v };
+              handlePreviewUpdate({ ...displayContent, details: newDetails });
+            }}
+            canEdit={isAdminOpen}
+          />
+        </p>
+      </div>
+    </motion.div>
+  );
+};
 
 export const DetailsSection: React.FC<DetailsSectionProps> = ({
   displayContent,
   handlePreviewUpdate,
   isAdminOpen,
   activeDetailsImage,
-  activeDetailsStyle
+  activeDetailsStyle,
+  isMobile
 }) => {
   return (
     <section className="py-32 md:py-60 container mx-auto px-6 max-w-6xl relative">
@@ -34,41 +108,17 @@ export const DetailsSection: React.FC<DetailsSectionProps> = ({
       <div className="grid md:grid-cols-2 gap-20 items-start">
         <div className="flex flex-col gap-16 order-2 md:order-1">
           <div className="space-y-16">
-            {displayContent.details.map((detail, idx) => {
-              const Icon = { MapPin, Info, Heart }[detail.icon] || Info;
-              return (
-                <div key={idx} className="flex gap-10 group">
-                  <div className="flex-shrink-0 w-16 h-16 border border-stone-100 flex items-center justify-center group-hover:bg-hover-accent transition-all duration-500">
-                    <Icon className="text-stone-300 w-6 h-6 group-hover:text-imperial-gold transition-colors" />
-                  </div>
-                  <div className="space-y-3">
-                    <h5 className="font-display text-2xl text-estate-green italic">
-                      <EditableText 
-                        value={detail.title} 
-                        onChange={v => {
-                          const newDetails = [...displayContent.details];
-                          newDetails[idx] = { ...detail, title: v };
-                          handlePreviewUpdate({ ...displayContent, details: newDetails });
-                        }}
-                        canEdit={isAdminOpen}
-                      />
-                    </h5>
-                    <p className="text-stone-500 font-light leading-loose">
-                      <EditableText 
-                        multiline
-                        value={detail.content} 
-                        onChange={v => {
-                          const newDetails = [...displayContent.details];
-                          newDetails[idx] = { ...detail, content: v };
-                          handlePreviewUpdate({ ...displayContent, details: newDetails });
-                        }}
-                        canEdit={isAdminOpen}
-                      />
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+            {displayContent.details.map((detail, idx) => (
+              <DetailItem 
+                key={idx}
+                detail={detail}
+                idx={idx}
+                displayContent={displayContent}
+                handlePreviewUpdate={handlePreviewUpdate}
+                isAdminOpen={isAdminOpen}
+                isMobile={isMobile}
+              />
+            ))}
           </div>
         </div>
 

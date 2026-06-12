@@ -617,6 +617,7 @@ export default function App() {
                   isLoggingIn={isLoggingIn}
                   handleYandexLogin={handleYandexLogin}
                   handleLogout={handleLogout}
+                  isMobile={isMobile}
                 />
               );
             }

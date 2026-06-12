@@ -1,5 +1,5 @@
-import React from "react";
-import { motion } from "motion/react";
+import React, { useRef } from "react";
+import { motion, useInView } from "motion/react";
 import { SiteContent } from "../../types";
 import { EditableText } from "../EditableText";
 import { Ornament } from "../Ornament";
@@ -29,7 +29,32 @@ interface RsvpSectionProps {
   isLoggingIn: boolean;
   handleYandexLogin: () => void;
   handleLogout: () => void;
+  isMobile: boolean;
 }
+
+interface RsvpStepCardProps {
+  children: React.ReactNode;
+  isMobile: boolean;
+}
+
+const RsvpStepCard: React.FC<RsvpStepCardProps> = ({ children, isMobile }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false, amount: 0.25 });
+  const isActive = isMobile && isInView;
+
+  return (
+    <div 
+      ref={ref}
+      className={`bg-stone-900/30 border rounded-xl p-6 md:p-8 space-y-6 relative transition-all duration-500 pt-10 ${
+        isActive 
+          ? "border-imperial-gold/30 shadow-[0_0_20px_rgba(212,175,55,0.06)] bg-stone-900/40" 
+          : "border-white/10 hover:border-imperial-gold/20"
+      }`}
+    >
+      {children}
+    </div>
+  );
+};
 
 export const RsvpSection: React.FC<RsvpSectionProps> = ({
   displayContent,
@@ -43,7 +68,8 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
   yandexUser,
   isLoggingIn,
   handleYandexLogin,
-  handleLogout
+  handleLogout,
+  isMobile
 }) => {
   return (
     <section id="rsvp" className="py-32 md:py-60 bg-stone-950 text-white relative overflow-hidden">
@@ -78,7 +104,7 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
             <form onSubmit={handleSubmit} className="text-left space-y-12">
               
               {/* STEP 1 */}
-              <div className="bg-stone-900/30 border border-white/10 rounded-xl p-6 md:p-8 space-y-6 relative hover:border-imperial-gold/20 transition-all pt-10">
+              <RsvpStepCard isMobile={isMobile}>
                 <div className="absolute -top-3 left-6 px-4 py-1.5 bg-stone-950 border border-imperial-gold/40 rounded-full text-[10px] uppercase tracking-[0.2em] text-imperial-gold font-bold">
                   Шагъ 1. Сведенiя о гостяхъ
                 </div>
@@ -145,10 +171,10 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
                     <p className="text-[10px] text-white/40 italic">Станет активным, когда выбрано «Будем вдвоем»</p>
                   )}
                 </div>
-              </div>
+              </RsvpStepCard>
 
               {/* STEP 2 */}
-              <div className="bg-stone-900/30 border border-white/10 rounded-xl p-6 md:p-8 space-y-6 relative hover:border-imperial-gold/20 transition-all pt-10">
+              <RsvpStepCard isMobile={isMobile}>
                 <div className="absolute -top-3 left-6 px-4 py-1.5 bg-stone-950 border border-imperial-gold/40 rounded-full text-[10px] uppercase tracking-[0.2em] text-imperial-gold font-bold">
                   Шагъ 2. Участiе и пожелания
                 </div>
@@ -188,10 +214,10 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
                     <p className="text-[10px] text-white/40 italic">Пожелания, предпочтения или комментарии (необязательно)</p>
                   </div>
                 </div>
-              </div>
+              </RsvpStepCard>
 
               {/* STEP 3 */}
-              <div className="bg-stone-900/30 border border-white/10 rounded-xl p-6 md:p-8 space-y-6 relative hover:border-imperial-gold/20 transition-all pt-10">
+              <RsvpStepCard isMobile={isMobile}>
                 <div className="absolute -top-3 left-6 px-4 py-1.5 bg-stone-950 border border-imperial-gold/40 rounded-full text-[10px] uppercase tracking-[0.2em] text-imperial-gold font-bold">
                   Шагъ 3. Подпись и отправка
                 </div>
@@ -264,7 +290,7 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
                     {isSubmitting ? "Отправка..." : (yandexUser ? "Запечатать письмо и отправить" : "Запечатать письмо (сначала подтвердите личность выше)")}
                   </button>
                 </div>
-              </div>
+              </RsvpStepCard>
 
             </form>
           )}

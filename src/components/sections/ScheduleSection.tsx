@@ -1,5 +1,5 @@
-import React from "react";
-import { motion } from "motion/react";
+import React, { useRef } from "react";
+import { motion, useInView } from "motion/react";
 import { Wine, Utensils, Music, Heart } from "lucide-react";
 import { SiteContent } from "../../types";
 import { EditableText } from "../EditableText";
@@ -9,12 +9,102 @@ interface ScheduleSectionProps {
   displayContent: SiteContent;
   handlePreviewUpdate: (newContent: SiteContent) => void;
   isAdminOpen: boolean;
+  isMobile: boolean;
 }
+
+interface ScheduleCardProps {
+  item: any;
+  idx: number;
+  displayContent: SiteContent;
+  handlePreviewUpdate: (newContent: SiteContent) => void;
+  isAdminOpen: boolean;
+  isMobile: boolean;
+}
+
+const ScheduleCard: React.FC<ScheduleCardProps> = ({
+  item,
+  idx,
+  displayContent,
+  handlePreviewUpdate,
+  isAdminOpen,
+  isMobile,
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  const isActive = isMobile && isInView;
+  
+  const Icon = { Wine, Utensils, Music, Heart }[item.icon] || Wine;
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: idx * 0.2 }}
+      className={`text-center group border p-8 transition-all duration-700 ${
+        isActive 
+          ? "border-imperial-gold/15 bg-imperial-gold/[0.02]" 
+          : "border-transparent hover:border-imperial-gold/10"
+      }`}
+    >
+      <div className={`w-12 h-12 mx-auto border flex items-center justify-center mb-10 transition-transform duration-1000 ${
+        isActive 
+          ? "border-imperial-gold/60 rotate-0" 
+          : "border-imperial-gold/30 rotate-[45deg] group-hover:rotate-0"
+      }`}>
+        <Icon className={`w-4 h-4 transition-transform duration-1000 ${
+          isActive 
+            ? "text-imperial-gold rotate-0" 
+            : "text-imperial-gold -rotate-[45deg] group-hover:rotate-0"
+        }`} />
+      </div>
+      <span className={`font-display italic text-3xl transition-colors block mb-4 ${
+        isActive ? "text-imperial-gold" : "text-stone-300 group-hover:text-imperial-gold"
+      }`}>
+        <EditableText 
+          value={item.time} 
+          onChange={v => {
+            const newSchedule = [...displayContent.schedule];
+            newSchedule[idx] = { ...item, time: v };
+            handlePreviewUpdate({ ...displayContent, schedule: newSchedule });
+          }}
+          canEdit={isAdminOpen}
+        />
+      </span>
+      <h4 className="font-display text-2xl text-estate-green mb-4">
+        <EditableText 
+          value={item.event} 
+          onChange={v => {
+            const newSchedule = [...displayContent.schedule];
+            newSchedule[idx] = { ...item, event: v };
+            handlePreviewUpdate({ ...displayContent, schedule: newSchedule });
+          }}
+          canEdit={isAdminOpen}
+        />
+      </h4>
+      <p className={`text-stone-500 text-xs tracking-widest leading-relaxed uppercase transition-opacity ${
+        isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"
+      }`}>
+        <EditableText 
+          value={item.desc} 
+          onChange={v => {
+            const newSchedule = [...displayContent.schedule];
+            newSchedule[idx] = { ...item, desc: v };
+            handlePreviewUpdate({ ...displayContent, schedule: newSchedule });
+          }}
+          canEdit={isAdminOpen}
+        />
+      </p>
+    </motion.div>
+  );
+};
 
 export const ScheduleSection: React.FC<ScheduleSectionProps> = ({
   displayContent,
   handlePreviewUpdate,
-  isAdminOpen
+  isAdminOpen,
+  isMobile
 }) => {
   return (
     <section className="py-32 bg-warm-cream border-y border-imperial-gold/5 relative">
@@ -35,56 +125,17 @@ export const ScheduleSection: React.FC<ScheduleSectionProps> = ({
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-12">
-          {displayContent.schedule.map((item, idx) => {
-            const Icon = { Wine, Utensils, Music, Heart }[item.icon] || Wine;
-            return (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.2 }}
-                className="text-center group border border-transparent hover:border-imperial-gold/10 p-8 transition-all duration-700"
-              >
-                <div className="w-12 h-12 mx-auto border border-imperial-gold/30 flex items-center justify-center mb-10 rotate-[45deg] group-hover:rotate-0 transition-transform duration-1000">
-                  <Icon className="w-4 h-4 text-imperial-gold -rotate-[45deg] group-hover:rotate-0 transition-transform duration-1000" />
-                </div>
-                <span className="font-display italic text-3xl text-stone-300 group-hover:text-imperial-gold transition-colors block mb-4">
-                  <EditableText 
-                    value={item.time} 
-                    onChange={v => {
-                      const newSchedule = [...displayContent.schedule];
-                      newSchedule[idx] = { ...item, time: v };
-                      handlePreviewUpdate({ ...displayContent, schedule: newSchedule });
-                    }}
-                    canEdit={isAdminOpen}
-                  />
-                </span>
-                <h4 className="font-display text-2xl text-estate-green mb-4">
-                  <EditableText 
-                    value={item.event} 
-                    onChange={v => {
-                      const newSchedule = [...displayContent.schedule];
-                      newSchedule[idx] = { ...item, event: v };
-                      handlePreviewUpdate({ ...displayContent, schedule: newSchedule });
-                    }}
-                    canEdit={isAdminOpen}
-                  />
-                </h4>
-                <p className="text-stone-500 text-xs tracking-widest leading-relaxed uppercase opacity-60 group-hover:opacity-100 transition-opacity">
-                  <EditableText 
-                    value={item.desc} 
-                    onChange={v => {
-                      const newSchedule = [...displayContent.schedule];
-                      newSchedule[idx] = { ...item, desc: v };
-                      handlePreviewUpdate({ ...displayContent, schedule: newSchedule });
-                    }}
-                    canEdit={isAdminOpen}
-                  />
-                </p>
-              </motion.div>
-            );
-          })}
+          {displayContent.schedule.map((item, idx) => (
+            <ScheduleCard 
+              key={idx}
+              item={item}
+              idx={idx}
+              displayContent={displayContent}
+              handlePreviewUpdate={handlePreviewUpdate}
+              isAdminOpen={isAdminOpen}
+              isMobile={isMobile}
+            />
+          ))}
         </div>
       </div>
     </section>
