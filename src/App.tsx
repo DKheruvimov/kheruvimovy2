@@ -145,6 +145,7 @@ export default function App() {
     name: "",
     attending: "yes",
     guests: "1",
+    guest2Name: "",
     message: ""
   });
 
@@ -366,7 +367,7 @@ export default function App() {
   const handleLogout = () => {
     setYandexUser(null);
     localStorage.removeItem('yandexUser');
-    setFormState(prev => ({ ...prev, name: "" }));
+    setFormState(prev => ({ ...prev, name: "", guest2Name: "" }));
   };
 
   const handleAdminLogout = () => {

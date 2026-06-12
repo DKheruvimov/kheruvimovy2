@@ -15,12 +15,14 @@ interface RsvpSectionProps {
     name: string;
     attending: string;
     guests: string;
+    guest2Name: string;
     message: string;
   };
   setFormState: React.Dispatch<React.SetStateAction<{
     name: string;
     attending: string;
     guests: string;
+    guest2Name: string;
     message: string;
   }>>;
   yandexUser: any;
@@ -87,14 +89,50 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
                   />
                 </div>
                 <div className="space-y-6">
+                  <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold block">Будете одинъ или съ парой?</label>
+                  <select 
+                    className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light appearance-none cursor-pointer leading-tight"
+                    value={formState.guests}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormState(prev => ({
+                        ...prev,
+                        guests: val,
+                        guest2Name: val === "1" ? "" : prev.guest2Name
+                      }));
+                    }}
+                  >
+                    <option value="1" className="bg-stone-900">Буду одинъ</option>
+                    <option value="2" className="bg-stone-900">Будемъ вдвоемъ</option>
+                  </select>
+                </div>
+
+                <div className={`space-y-6 transition-all duration-300 ${formState.guests !== "2" ? "opacity-20 pointer-events-none" : ""}`}>
+                  <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold block">Имя спутника / спутницы</label>
+                  <input 
+                    required={formState.guests === "2"}
+                    disabled={formState.guests !== "2"}
+                    type="text" 
+                    placeholder={formState.guests === "2" ? "Имя спутника" : "Будетъ одинъ"}
+                    className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light placeholder:text-white/10 text-white disabled:cursor-not-allowed"
+                    value={formState.guest2Name}
+                    onChange={e => setFormState({...formState, guest2Name: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-6">
                   <label className="text-[9px] uppercase tracking-[0.4em] text-white/20 font-bold block">Намерены ли быть?</label>
                   <select 
                     className="w-full bg-transparent border-b border-white/10 pb-4 focus:outline-none focus:border-imperial-gold transition-colors font-display text-xl md:text-2xl font-light appearance-none cursor-pointer leading-tight"
                     value={formState.attending}
                     onChange={e => setFormState({...formState, attending: e.target.value})}
                   >
-                    <option value="yes" className="bg-stone-900">С радостiю прибудемъ</option>
-                    <option value="no" className="bg-stone-900">Къ сожаленiю, отклонимъ</option>
+                    <option value="yes" className="bg-stone-900">
+                      {formState.guests === "2" ? "С радостiю прибудемъ" : "С радостiю прибуду"}
+                    </option>
+                    <option value="no" className="bg-stone-900">
+                      {formState.guests === "2" ? "Къ сожаленiю, отклонимъ" : "Къ сожаленiю, отклоню"}
+                    </option>
                   </select>
                 </div>
               </div>

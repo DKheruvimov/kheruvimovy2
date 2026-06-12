@@ -37,7 +37,16 @@ export const RsvpsTab: React.FC<RsvpsTabProps> = ({
                 )}
                 <div className="flex-grow">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-display italic text-lg leading-tight">{rsvp.name}</h4>
+                    <h4 className="font-display italic text-lg leading-tight flex flex-wrap items-center gap-x-2">
+                      <span>{rsvp.name}</span>
+                      {rsvp.guests === "2" && rsvp.guest2Name && (
+                        <>
+                          <span className="text-stone-400 font-sans text-xs not-italic">и</span>
+                          <span>{rsvp.guest2Name}</span>
+                          <span className="text-[9px] uppercase tracking-wider text-imperial-gold font-bold bg-imperial-gold/10 px-1.5 py-0.5 rounded leading-none font-sans not-italic ml-1">Пара</span>
+                        </>
+                      )}
+                    </h4>
                     <div className="flex items-center gap-2">
                       <span className={`text-[9px] uppercase tracking-tighter px-2 py-0.5 rounded ${rsvp.attending === 'yes' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {rsvp.attending === 'yes' ? 'Будетъ' : 'Отклонилъ'}
